@@ -8,12 +8,14 @@ import {
   triggerWarningHaptic,
 } from '../../utils/haptics';
 import { voiceService } from '../../services/audio/voiceService';
+import { THEME } from '../../constants/theme';
 import { t } from '../../i18n';
 
 interface MedicationCardProps {
   medication: Medication;
   schedule?: Schedule;
   patientName?: string;
+  patientColor?: string;
   onTake?: () => void;
   onSnooze?: () => void;
   onSkip?: () => void;
@@ -23,16 +25,16 @@ interface MedicationCardProps {
 export const MedicationCard: React.FC<MedicationCardProps> = ({
   medication,
   schedule,
-  patientName = 'ውድ ታካሚ',
+  patientName = 'Yared',
+  patientColor = THEME.colors.teal,
   onTake,
   onSnooze,
-  onSkip,
   onRefill,
 }) => {
   const isLowStock = medication.stockCount <= medication.lowStockThreshold;
   const timeDisplay = schedule
     ? formatEthiopianTime(schedule.ethiopianTime, 'am')
-    : null;
+    : 'ጠዋት 02:00';
 
   const handleSpeak = () => {
     triggerSelectionHaptic();
@@ -47,13 +49,13 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
 
   return (
     <View style={styles.card}>
-      {/* Header: Medication Name & Time Badge */}
+      {/* 1. Header: Patient Info (Left) & Ethiopian Time (Right) */}
       <View style={styles.headerRow}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.medName}>{medication.name}</Text>
-          <Text style={styles.dosageText}>
-            {medication.dosage} • {t(`meal.${medication.mealTiming}`)}
-          </Text>
+        <View style={styles.patientBadge}>
+          <View style={[styles.avatarCircle, { backgroundColor: patientColor }]}>
+            <Text style={styles.avatarText}>{patientName.charAt(0)}</Text>
+          </View>
+          <Text style={styles.patientName}>{patientName}</Text>
         </View>
 
         <View style={styles.headerRight}>
@@ -67,45 +69,46 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
             <Text style={styles.speakerIcon}>🔊</Text>
           </TouchableOpacity>
 
-          {timeDisplay && (
-            <View style={styles.timeBadge}>
-              <Text style={styles.timeBadgeText}>{timeDisplay}</Text>
-            </View>
-          )}
+          <Text style={styles.timeText}>{timeDisplay}</Text>
         </View>
       </View>
 
-      {/* Stock Bar */}
-      <View style={styles.stockRow}>
-        <View style={styles.stockInfo}>
-          <Text style={[styles.stockText, isLowStock && styles.lowStockText]}>
-            {t('medication.stock_label')}: {medication.stockCount}
+      {/* 2. Medication Details */}
+      <View style={styles.medDetails}>
+        <View style={styles.medTitleRow}>
+          <Text style={styles.pillIcon}>💊</Text>
+          <Text style={styles.medName}>{medication.name}</Text>
+        </View>
+        <Text style={styles.dosageText}>
+          {medication.dosage} • {t(`meal.${medication.mealTiming}`)}
+        </Text>
+      </View>
+
+      {/* 3. Stock warning (if low) */}
+      {isLowStock && (
+        <View style={styles.stockAlertRow}>
+          <Text style={styles.stockAlertText}>
+            ⚠️ {t('medication.low_stock_warning', { days: 3 })} ({medication.stockCount} ቀሪ)
           </Text>
-          {isLowStock && (
-            <Text style={styles.warningTag}>
-              {t('medication.low_stock_warning', { days: 3 })}
-            </Text>
+          {onRefill && (
+            <TouchableOpacity onPress={onRefill} style={styles.refillLink}>
+              <Text style={styles.refillLinkText}>{t('actions.refill')}</Text>
+            </TouchableOpacity>
           )}
         </View>
+      )}
 
-        {isLowStock && onRefill && (
-          <TouchableOpacity style={styles.refillButton} onPress={onRefill}>
-            <Text style={styles.refillButtonText}>{t('actions.refill')}</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Action Buttons */}
+      {/* 4. Action Buttons matching Mədin Design */}
       <View style={styles.actionsRow}>
         <TouchableOpacity
-          style={[styles.actionBtn, styles.takeBtn]}
+          style={[styles.actionBtn, styles.takenBtn]}
           onPress={() => {
             triggerSuccessHaptic();
             onTake?.();
           }}
           activeOpacity={0.8}
         >
-          <Text style={styles.takeBtnText}>✓ {t('actions.take')}</Text>
+          <Text style={styles.takenBtnText}>Taken</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -116,18 +119,7 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
           }}
           activeOpacity={0.8}
         >
-          <Text style={styles.snoozeBtnText}>⏰ {t('actions.snooze')}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.skipBtn]}
-          onPress={() => {
-            triggerWarningHaptic();
-            onSkip?.();
-          }}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.skipBtnText}>{t('actions.skip')}</Text>
+          <Text style={styles.snoozeBtnText}>Snooze</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -137,26 +129,40 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: THEME.borderRadius.lg,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    borderColor: '#EBF1F1',
+    ...THEME.shadow.card,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  titleContainer: {
-    flex: 1,
-    marginRight: 8,
+  patientBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  avatarCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  patientName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: THEME.colors.textPrimary,
   },
   headerRight: {
     flexDirection: 'row',
@@ -164,115 +170,100 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   speakerButton: {
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 10,
+    backgroundColor: '#F7FAF9',
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: '#E2E8F0',
   },
   speakerIcon: {
-    fontSize: 14,
+    fontSize: 13,
+  },
+  timeText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: THEME.colors.textPrimary,
+  },
+  medDetails: {
+    marginBottom: 16,
+    paddingLeft: 4,
+  },
+  medTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  pillIcon: {
+    fontSize: 16,
   },
   medName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 4,
+    color: THEME.colors.textPrimary,
   },
   dosageText: {
     fontSize: 13,
-    color: '#64748B',
+    color: THEME.colors.textSecondary,
     fontWeight: '500',
+    paddingLeft: 22,
   },
-  timeBadge: {
-    backgroundColor: '#DBEAFE',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  timeBadgeText: {
-    color: '#1E40AF',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  stockRow: {
+  stockAlertRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderColor: '#F1F5F9',
+    backgroundColor: THEME.colors.coralLight,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
     marginBottom: 12,
   },
-  stockInfo: {
-    flex: 1,
-  },
-  stockText: {
-    fontSize: 12,
-    color: '#475569',
+  stockAlertText: {
+    fontSize: 11,
+    color: THEME.colors.coralDark,
     fontWeight: '600',
   },
-  lowStockText: {
-    color: '#DC2626',
-    fontWeight: '700',
+  refillLink: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
-  warningTag: {
-    fontSize: 11,
-    color: '#B91C1C',
-    marginTop: 2,
-  },
-  refillButton: {
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  refillButtonText: {
+  refillLinkText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#92400E',
+    color: THEME.colors.coralDark,
+    textDecorationLine: 'underline',
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
   },
   actionBtn: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  takeBtn: {
-    backgroundColor: '#16A34A',
-    flex: 1.5,
+  takenBtn: {
+    backgroundColor: THEME.colors.coral,
+    shadowColor: THEME.colors.coral,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  takeBtnText: {
+  takenBtnText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
   },
   snoozeBtn: {
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
+    backgroundColor: THEME.colors.snoozeBg,
   },
   snoozeBtnText: {
-    color: '#334155',
-    fontSize: 13,
+    color: THEME.colors.snoozeText,
+    fontSize: 15,
     fontWeight: '600',
-  },
-  skipBtn: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  skipBtnText: {
-    color: '#64748B',
-    fontSize: 13,
-    fontWeight: '500',
   },
 });

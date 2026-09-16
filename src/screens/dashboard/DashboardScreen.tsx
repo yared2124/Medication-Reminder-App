@@ -9,21 +9,22 @@ import {
   StatusBar,
 } from 'react-native';
 import { useAppStore } from '../../store/useAppStore';
-import { ProfileSwitcher } from '../../components/dependent/ProfileSwitcher';
 import { MedicationCard } from '../../components/medication/MedicationCard';
 import { AddProfileModal } from '../../components/dependent/AddProfileModal';
 import { RefillStockModal } from '../../components/medication/RefillStockModal';
 import { Medication } from '../../types/models';
 import { triggerSelectionHaptic } from '../../utils/haptics';
+import { THEME } from '../../constants/theme';
 import { t } from '../../i18n';
 
 interface DashboardScreenProps {
   onNavigateToAddMedication: () => void;
-  onNavigateToProfiles?: () => void;
+  onOpenNotifications?: () => void;
 }
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onNavigateToAddMedication,
+  onOpenNotifications,
 }) => {
   const {
     profiles,
@@ -44,7 +45,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     loadInitialData();
   }, [loadInitialData]);
 
-  // Filter medications and schedules by active profile
+  // Filter medications by active profile if set
   const filteredMeds = activeProfileId
     ? medications.filter((m) => m.profileId === activeProfileId)
     : medications;
@@ -59,10 +60,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   const handleSnooze = (medId: string, scheduleId: string, profileId: string) => {
     logIntake(scheduleId, medId, profileId, 'SNOOZED');
-  };
-
-  const handleSkip = (medId: string, scheduleId: string, profileId: string) => {
-    logIntake(scheduleId, medId, profileId, 'SKIPPED');
   };
 
   const handleConfirmRefill = (medicationId: string, addedCount: number) => {
@@ -82,56 +79,38 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <StatusBar barStyle="light-content" backgroundColor={THEME.colors.teal} />
 
-      {/* Top App Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.appTitle}>{t('app.name')}</Text>
-          <Text style={styles.subTitle}>{t('app.tagline')}</Text>
-        </View>
+      {/* 1. Mədin Teal Header (☰ Home 🔔) */}
+      <View style={styles.tealHeader}>
+        <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7}>
+          <Text style={styles.headerIconText}>☰</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>Home</Text>
 
         <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => {
-            triggerSelectionHaptic();
-            onNavigateToAddMedication();
-          }}
-          activeOpacity={0.8}
+          style={styles.headerIconBtn}
+          onPress={onOpenNotifications}
+          activeOpacity={0.7}
         >
-          <Text style={styles.addButtonText}>+ {t('medication.add_title')}</Text>
+          <Text style={styles.headerIconText}>🔔</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Dependent Switcher */}
-      <ProfileSwitcher
-        profiles={profiles}
-        activeProfileId={activeProfileId}
-        onSelectProfile={(id) => {
-          triggerSelectionHaptic();
-          setActiveProfileId(id);
-        }}
-        onAddProfile={() => {
-          triggerSelectionHaptic();
-          setIsAddProfileModalVisible(true);
-        }}
-      />
-
-      {/* Main Medication List */}
-      <View style={styles.listContainer}>
+      {/* 2. Main Content Feed */}
+      <View style={styles.bodyContainer}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionHeading}>
-            {t('common.today')} {t('app.name')}
-          </Text>
+          <Text style={styles.sectionHeading}>Upcoming for the day</Text>
           <Text style={styles.countBadge}>{filteredMeds.length}</Text>
         </View>
 
         {filteredMeds.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>💊</Text>
-            <Text style={styles.emptyTitle}>{t('common.empty')}</Text>
+            <Text style={styles.emptyTitle}>No medications today</Text>
             <Text style={styles.emptySubtitle}>
-              የመድሃኒት መውሰጃ ሰዓት ለማዘጋጀት ከላይ ያለውን ቁልፍ ይጫኑ።
+              Tap the + button below to add your first Ethiopian time schedule.
             </Text>
             <TouchableOpacity
               style={styles.emptyCtaButton}
@@ -140,7 +119,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 onNavigateToAddMedication();
               }}
             >
-              <Text style={styles.emptyCtaText}>+ አዲስ መድሃኒት መዝግብ</Text>
+              <Text style={styles.emptyCtaText}>+ Add Medication</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -156,15 +135,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 <MedicationCard
                   medication={item}
                   schedule={schedule}
-                  patientName={profile?.name}
+                  patientName={profile?.name ?? 'Patient'}
+                  patientColor={profile?.color ?? THEME.colors.teal}
                   onTake={() =>
                     schedule && handleTake(item.id, schedule.id, item.profileId)
                   }
                   onSnooze={() =>
                     schedule && handleSnooze(item.id, schedule.id, item.profileId)
-                  }
-                  onSkip={() =>
-                    schedule && handleSkip(item.id, schedule.id, item.profileId)
                   }
                   onRefill={() => {
                     triggerSelectionHaptic();
@@ -177,14 +154,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         )}
       </View>
 
-      {/* Interactive Add Dependent Modal */}
+      {/* Modals */}
       <AddProfileModal
         visible={isAddProfileModalVisible}
         onClose={() => setIsAddProfileModalVisible(false)}
         onSave={handleSaveProfile}
       />
 
-      {/* Interactive Refill Inventory Modal */}
       <RefillStockModal
         visible={selectedMedForRefill !== null}
         medication={selectedMedForRefill}
@@ -198,41 +174,34 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: THEME.colors.canvas,
   },
-  header: {
+  tealHeader: {
+    height: 60,
+    backgroundColor: THEME.colors.teal,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 10,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
   },
-  appTitle: {
+  headerTitle: {
     fontSize: 20,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  subTitle: {
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  addButton: {
-    backgroundColor: '#2563EB',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-  },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: 13,
     fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
-  listContainer: {
+  headerIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerIconText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+  },
+  bodyContainer: {
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
@@ -240,19 +209,19 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
     gap: 8,
   },
   sectionHeading: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#1E293B',
+    color: THEME.colors.textPrimary,
   },
   countBadge: {
-    backgroundColor: '#E2E8F0',
-    color: '#475569',
+    backgroundColor: THEME.colors.tealLight,
+    color: THEME.colors.tealDark,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
@@ -274,20 +243,20 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1E293B',
+    color: THEME.colors.textPrimary,
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: THEME.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 20,
     lineHeight: 18,
   },
   emptyCtaButton: {
-    backgroundColor: '#2563EB',
+    backgroundColor: THEME.colors.coral,
     paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
     borderRadius: 12,
   },
   emptyCtaText: {

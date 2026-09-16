@@ -3,11 +3,17 @@ import { View, StyleSheet } from 'react-native';
 import { useAppStore } from './src/store/useAppStore';
 import { DashboardScreen } from './src/screens/dashboard/DashboardScreen';
 import { AddMedicationScreen } from './src/screens/medication/AddMedicationScreen';
+import { HistoryScreen } from './src/screens/history/HistoryScreen';
+import { ProfilesScreen } from './src/screens/profiles/ProfilesScreen';
+import { BottomTabBar, TabType } from './src/components/navigation/BottomTabBar';
+import { AlarmModal } from './src/components/notifications/AlarmModal';
+import { voiceService } from './src/services/audio/voiceService';
+import { THEME } from './src/constants/theme';
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<'DASHBOARD' | 'ADD_MEDICATION'>(
-    'DASHBOARD'
-  );
+  const [activeTab, setActiveTab] = useState<TabType>('HOME');
+  const [isAddingMedication, setIsAddingMedication] = useState(false);
+  const [isAlarmModalVisible, setIsAlarmModalVisible] = useState(false);
 
   const { addProfile, addMedicationWithSchedule, loadInitialData } = useAppStore();
 
@@ -17,67 +23,71 @@ export default function App() {
 
       const state = useAppStore.getState();
 
-      // If first launch, seed default demo profiles & sample medications
+      // Seed initial patients from the Mədin design mockup if empty
       if (state.profiles.length === 0) {
-        const yaredProfile = await addProfile({
-          name: 'ያሬድ (እኔ)',
+        const yared = await addProfile({
+          name: 'Yared',
           color: '#2563EB',
           relationship: 'Self',
-          age: 34,
+          age: 32,
         });
 
-        const motherProfile = await addProfile({
-          name: 'እማማ',
+        const kidist = await addProfile({
+          name: 'Kidist',
+          color: THEME.colors.teal,
+          relationship: 'Daughter',
+          age: 12,
+        });
+
+        const saranara = await addProfile({
+          name: 'Saranara (እማማ)',
           color: '#EC4899',
           relationship: 'Mother',
-          age: 62,
+          age: 64,
         });
 
-        // Seed sample schedule for Mother (Blood Pressure)
+        // 1. Amlodipine for Yared (ጠዋት 2:00)
         await addMedicationWithSchedule(
           {
-            profileId: motherProfile.id,
-            name: 'አምሎዲፒን (የደም ግፊት)',
-            dosage: '1 ኪኒን',
+            profileId: yared.id,
+            name: 'Amlodipine',
+            dosage: '1 Tablet',
             dosageAmount: 1,
             mealTiming: 'AFTER_MEAL',
-            stockCount: 18,
-            lowStockThreshold: 6,
-          },
-          { hour: 2, minute: 30, period: 'TEWAT' } // 02:30 ጠዋት (8:30 AM)
-        );
-
-        // Seed sample schedule for Yared
-        await addMedicationWithSchedule(
-          {
-            profileId: yaredProfile.id,
-            name: 'ቫይታሚን ዲ (Vitamin D)',
-            dosage: '1 ኪኒን',
-            dosageAmount: 1,
-            mealTiming: 'WITH_MEAL',
-            stockCount: 25,
+            stockCount: 24,
             lowStockThreshold: 6,
           },
           { hour: 2, minute: 0, period: 'TEWAT' } // 02:00 ጠዋት (8:00 AM)
         );
 
-        // Set active profile to "All" (null) so all cards show immediately
-        useAppStore.getState().setActiveProfileId(null);
-      } else if (state.medications.length === 0 && state.profiles.length > 0) {
-        // In case profiles existed but no medications were added yet
-        const firstProfile = state.profiles[0];
+        // 2. Paracetamol for Kidist (ከሰዓት 8:30)
         await addMedicationWithSchedule(
           {
-            profileId: firstProfile.id,
-            name: 'አምሎዲፒን (የደም ግፊት)',
-            dosage: '1 ኪኒን',
+            profileId: kidist.id,
+            name: 'Paracetamol',
+            dosage: '1 Tablet',
             dosageAmount: 1,
             mealTiming: 'AFTER_MEAL',
-            stockCount: 18,
+            stockCount: 16,
             lowStockThreshold: 6,
           },
-          { hour: 2, minute: 30, period: 'TEWAT' }
+          { hour: 8, minute: 30, period: 'KESEAT' } // 08:30 ከሰዓት (2:30 PM)
         );
+
+        // 3. Metformin for Mother (ጠዋት 2:00)
+        await addMedicationWithSchedule(
+          {
+            profileId: saranara.id,
+            name: 'Metformin',
+            dosage: '1 Tablet',
+            dosageAmount: 1,
+            mealTiming: 'WITH_MEAL',
+            stockCount: 5, // Low stock demo!
+            lowStockThreshold: 6,
+          },
+          { hour: 2, minute: 0, period: 'TEWAT' }
+        );
+
         useAppStore.getState().setActiveProfileId(null);
       }
     };
@@ -85,18 +95,83 @@ export default function App() {
     initialize();
   }, [loadInitialData, addProfile, addMedicationWithSchedule]);
 
+  const handleOpenAlertTest = () => {
+    setIsAlarmModalVisible(true);
+    voiceService.speakReminder();
+  };
+
+  const renderActiveTabScreen = () => {
+    switch (activeTab) {
+      case 'HOME':
+        return (
+          <DashboardScreen
+            onNavigateToAddMedication={() => setIsAddingMedication(true)}
+            onOpenNotifications={handleOpenAlertTest}
+          />
+        );
+      case 'HISTORY':
+        return <HistoryScreen />;
+      case 'PROFILES':
+        return <ProfilesScreen />;
+      case 'ALERTS':
+        // Trigger voice alert and show full-screen modal
+        return (
+          <DashboardScreen
+            onNavigateToAddMedication={() => setIsAddingMedication(true)}
+            onOpenNotifications={handleOpenAlertTest}
+          />
+        );
+      default:
+        return (
+          <DashboardScreen
+            onNavigateToAddMedication={() => setIsAddingMedication(true)}
+            onOpenNotifications={handleOpenAlertTest}
+          />
+        );
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {currentScreen === 'DASHBOARD' ? (
-        <DashboardScreen
-          onNavigateToAddMedication={() => setCurrentScreen('ADD_MEDICATION')}
+      {isAddingMedication ? (
+        <AddMedicationScreen
+          onBack={() => setIsAddingMedication(false)}
+          onSuccess={() => setIsAddingMedication(false)}
         />
       ) : (
-        <AddMedicationScreen
-          onBack={() => setCurrentScreen('DASHBOARD')}
-          onSuccess={() => setCurrentScreen('DASHBOARD')}
-        />
+        <>
+          <View style={styles.screenWrapper}>{renderActiveTabScreen()}</View>
+
+          {/* Mədin Bottom Navigation Bar with Floating Teal FAB (+) */}
+          <BottomTabBar
+            activeTab={activeTab}
+            onSelectTab={(tab) => {
+              if (tab === 'ALERTS') {
+                handleOpenAlertTest();
+              } else {
+                setActiveTab(tab);
+              }
+            }}
+            onPressAdd={() => setIsAddingMedication(true)}
+          />
+        </>
       )}
+
+      {/* Mədin Full-Screen Notification Overlay */}
+      <AlarmModal
+        visible={isAlarmModalVisible}
+        medicationName="Amlodipine"
+        patientName="Yared"
+        dosage="1 Tablet • ጠዋት 2:00"
+        onTake={() => {
+          setIsAlarmModalVisible(false);
+          voiceService.speakTakenConfirmation();
+        }}
+        onSnooze={() => {
+          setIsAlarmModalVisible(false);
+        }}
+        onDismiss={() => setIsAlarmModalVisible(false)}
+      />
     </View>
   );
 }
@@ -104,6 +179,9 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: THEME.colors.canvas,
+  },
+  screenWrapper: {
+    flex: 1,
   },
 });

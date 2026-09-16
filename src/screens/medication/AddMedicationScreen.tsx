@@ -7,12 +7,15 @@ import {
   ScrollView,
   StyleSheet,
   SafeAreaView,
+  StatusBar,
   Alert,
 } from 'react-native';
 import { useAppStore } from '../../store/useAppStore';
 import { EthiopianTimePicker } from '../../components/time-picker/EthiopianTimePicker';
 import { EthiopianTime } from '../../types/ethiopianTime';
 import { MealTiming } from '../../types/models';
+import { THEME } from '../../constants/theme';
+import { triggerSelectionHaptic, triggerSuccessHaptic } from '../../utils/haptics';
 import { t } from '../../i18n';
 
 interface AddMedicationScreenProps {
@@ -37,7 +40,7 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
     activeProfileId || (profiles[0]?.id ?? '')
   );
   const [name, setName] = useState('');
-  const [dosage, setDosage] = useState('1 ኪኒን');
+  const [dosage, setDosage] = useState('1 Tablet');
   const [mealTiming, setMealTiming] = useState<MealTiming>('AFTER_MEAL');
   const [stockCount, setStockCount] = useState('30');
   const [ethiopianTime, setEthiopianTime] = useState<EthiopianTime>({
@@ -48,26 +51,27 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('ስህተት', 'እባክዎ የመድሃኒቱን ስም ያስገቡ።');
+      Alert.alert('Required', 'Please enter a medication name.');
       return;
     }
 
     if (!selectedProfileId) {
-      Alert.alert('ስህተት', 'እባክዎ መጀመሪያ የታካሚ መገለጫ ይምረጡ ወይም ይፍጠሩ።');
+      Alert.alert('Required', 'Please select a patient profile.');
       return;
     }
 
-    const parsedStock = parseInt(stockCount, 10) || 0;
+    triggerSuccessHaptic();
+    const parsedStock = parseInt(stockCount, 10) || 30;
 
     await addMedicationWithSchedule(
       {
         profileId: selectedProfileId,
         name: name.trim(),
-        dosage: dosage.trim() || '1 ኪኒን',
+        dosage: dosage.trim() || '1 Tablet',
         dosageAmount: 1,
         mealTiming,
         stockCount: parsedStock,
-        lowStockThreshold: 6, // 3 days for 2x daily or 6 days for 1x
+        lowStockThreshold: 6,
       },
       ethiopianTime
     );
@@ -77,17 +81,20 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Text style={styles.backButtonText}>‹ {t('common.back')}</Text>
+      <StatusBar barStyle="light-content" backgroundColor={THEME.colors.teal} />
+
+      {/* 1. Mədin Teal Header (< Add Medication) */}
+      <View style={styles.tealHeader}>
+        <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.7}>
+          <Text style={styles.backBtnIcon}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('medication.add_title')}</Text>
-        <View style={styles.placeholder} />
+        <Text style={styles.headerTitle}>Add Medication</Text>
+        <View style={{ width: 36 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Profile Selector */}
-        <Text style={styles.fieldLabel}>ለማን ይሰጣል? (Patient / Dependent)</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Patient Selection */}
+        <Text style={styles.fieldLabel}>Patient name</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -102,7 +109,10 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
                   styles.profileChip,
                   isSelected && { backgroundColor: p.color, borderColor: p.color },
                 ]}
-                onPress={() => setSelectedProfileId(p.id)}
+                onPress={() => {
+                  triggerSelectionHaptic();
+                  setSelectedProfileId(p.id);
+                }}
               >
                 <Text
                   style={[
@@ -118,40 +128,43 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
         </ScrollView>
 
         {/* Medication Name */}
-        <Text style={styles.fieldLabel}>{t('medication.name_label')} *</Text>
+        <Text style={styles.fieldLabel}>Medication</Text>
         <TextInput
           style={styles.textInput}
-          placeholder={t('medication.name_placeholder')}
+          placeholder="e.g. Paracetamol, Amlodipine"
           placeholderTextColor="#94A3B8"
           value={name}
           onChangeText={setName}
         />
 
         {/* Dosage */}
-        <Text style={styles.fieldLabel}>{t('medication.dosage_label')}</Text>
+        <Text style={styles.fieldLabel}>Dosage</Text>
         <TextInput
           style={styles.textInput}
-          placeholder={t('medication.dosage_placeholder')}
+          placeholder="1 Tablet"
           placeholderTextColor="#94A3B8"
           value={dosage}
           onChangeText={setDosage}
         />
 
-        {/* Meal Instruction */}
-        <Text style={styles.fieldLabel}>{t('medication.meal_label')}</Text>
+        {/* Food Timing */}
+        <Text style={styles.fieldLabel}>Meal Relation</Text>
         <View style={styles.mealRow}>
           {MEAL_TIMINGS.map((timing) => {
             const isSelected = mealTiming === timing;
             return (
               <TouchableOpacity
                 key={timing}
-                style={[styles.mealButton, isSelected && styles.mealButtonSelected]}
-                onPress={() => setMealTiming(timing)}
+                style={[styles.mealBtn, isSelected && styles.mealBtnSelected]}
+                onPress={() => {
+                  triggerSelectionHaptic();
+                  setMealTiming(timing);
+                }}
               >
                 <Text
                   style={[
-                    styles.mealButtonText,
-                    isSelected && styles.mealButtonTextSelected,
+                    styles.mealBtnText,
+                    isSelected && styles.mealBtnTextSelected,
                   ]}
                 >
                   {t(`meal.${timing}`)}
@@ -161,11 +174,11 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
           })}
         </View>
 
-        {/* Ethiopian Time Picker */}
+        {/* Intuitive Ethiopian Time Picker Dial */}
         <EthiopianTimePicker value={ethiopianTime} onChange={setEthiopianTime} />
 
-        {/* Stock Inventory */}
-        <Text style={styles.fieldLabel}>{t('medication.stock_label')}</Text>
+        {/* Inventory Units */}
+        <Text style={styles.fieldLabel}>Total Stock / Inventory (Pills)</Text>
         <TextInput
           style={styles.textInput}
           keyboardType="numeric"
@@ -175,9 +188,14 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
           onChangeText={setStockCount}
         />
 
-        {/* Save Button */}
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.8}>
-          <Text style={styles.saveButtonText}>{t('common.save')}</Text>
+        {/* Bottom CTA Button: Add Now (Coral) */}
+        <TouchableOpacity
+          style={[styles.addNowBtn, !name.trim() && styles.addNowBtnDisabled]}
+          onPress={handleSave}
+          disabled={!name.trim()}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.addNowBtnText}>Add Now</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -187,43 +205,40 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: THEME.colors.canvas,
   },
-  header: {
+  tealHeader: {
+    height: 60,
+    backgroundColor: THEME.colors.teal,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
   },
-  backButton: {
-    paddingVertical: 4,
-    paddingRight: 8,
+  backBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  backButtonText: {
-    fontSize: 16,
-    color: '#2563EB',
-    fontWeight: '600',
+  backBtnIcon: {
+    fontSize: 28,
+    color: '#FFFFFF',
+    fontWeight: '300',
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#FFFFFF',
   },
-  placeholder: {
-    width: 40,
-  },
-  scrollContainer: {
+  scrollContent: {
     padding: 16,
-    paddingBottom: 36,
+    paddingBottom: 40,
   },
   fieldLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#334155',
+    color: THEME.colors.textPrimary,
     marginTop: 14,
     marginBottom: 6,
   },
@@ -235,7 +250,7 @@ const styles = StyleSheet.create({
   profileChip: {
     paddingVertical: 8,
     paddingHorizontal: 14,
-    borderRadius: 16,
+    borderRadius: 14,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#CBD5E1',
@@ -248,53 +263,56 @@ const styles = StyleSheet.create({
   textInput: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 10,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 15,
-    color: '#0F172A',
+    color: THEME.colors.textPrimary,
   },
   mealRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  mealButton: {
+  mealBtn: {
     flexBasis: '48%',
     paddingVertical: 10,
     borderRadius: 10,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: '#E2E8F0',
     alignItems: 'center',
   },
-  mealButtonSelected: {
-    backgroundColor: '#1E293B',
-    borderColor: '#0F172A',
+  mealBtnSelected: {
+    backgroundColor: THEME.colors.teal,
+    borderColor: THEME.colors.teal,
   },
-  mealButtonText: {
+  mealBtnText: {
     fontSize: 13,
-    color: '#475569',
+    color: THEME.colors.textSecondary,
     fontWeight: '600',
   },
-  mealButtonTextSelected: {
+  mealBtnTextSelected: {
     color: '#FFFFFF',
     fontWeight: '700',
   },
-  saveButton: {
-    backgroundColor: '#2563EB',
+  addNowBtn: {
+    backgroundColor: THEME.colors.coral,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
     marginTop: 24,
-    shadowColor: '#2563EB',
+    shadowColor: THEME.colors.coral,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 4,
   },
-  saveButtonText: {
+  addNowBtnDisabled: {
+    backgroundColor: '#CBD5E1',
+  },
+  addNowBtnText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
