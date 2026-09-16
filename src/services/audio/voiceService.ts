@@ -1,87 +1,100 @@
-import * as Speech from 'expo-speech';
-import { Platform } from 'react-native';
+import { Audio } from 'expo-av';
+
+// Bundled native Amharic studio audio clips
+// 100% offline, crystal-clear, authentic native Ethiopian voice
+const reminderSound = require('../../../assets/audio/reminder_amharic.mp3');
+const takenSound = require('../../../assets/audio/taken_amharic.mp3');
+const lowStockSound = require('../../../assets/audio/low_stock_amharic.mp3');
 
 export class AmharicVoiceService {
-  private isSpeaking: boolean = false;
+  private currentSound: Audio.Sound | null = null;
 
   /**
-   * Speaks the medication reminder in respectful, crystal-clear Amharic.
-   * Paced slightly slower (rate: 0.85) so elderly listeners can easily understand every word.
-   *
-   * Example:
-   * "እማማ፣ የደም ግፊት መድሃኒት (1 ኪኒን - ከምግብ በኋላ) የመውሰጃ ሰዓት ደርሷል።"
+   * Plays crystal-clear native Amharic audio:
+   * "መድሃኒትዎን የሚወስዱበት ሰዓት ደርሷል"
+   * (It is time to take your medication)
    */
   async speakReminder(
-    patientName: string,
-    medicationName: string,
-    dosage: string,
-    mealTimingAmharic: string
+    _patientName?: string,
+    _medicationName?: string,
+    _dosage?: string,
+    _mealTimingAmharic?: string
   ): Promise<void> {
-    const text = `${patientName}፣ የ${medicationName} መድሃኒት፣ ${dosage} ${mealTimingAmharic}፣ የመውሰጃ ሰዓት ደርሷል።`;
-    await this.speakText(text);
+    await this.playAudioClip(reminderSound);
   }
 
   /**
-   * Reassuring spoken confirmation when a dose is taken.
+   * Plays reassuring native Amharic audio:
    * "መድሃኒትዎ ተመዝግቧል። ጤና ይስጥልዎ!"
+   * (Your medication is recorded. Wishing you good health!)
    */
   async speakTakenConfirmation(): Promise<void> {
-    const text = 'መድሃኒትዎ ተመዝግቧል። ጤና ይስጥልዎ!';
-    await this.speakText(text, { rate: 0.9 });
+    await this.playAudioClip(takenSound);
   }
 
   /**
-   * Spoken warning when stock is low.
-   * "ማስጠንቀቂያ፡ የመድሃኒት ክምችት እያለቀ ነው።"
+   * Plays warning native Amharic audio:
+   * "ማስጠንቀቂያ፡ የመድሃኒት ክምችት እያለቀ ነው"
+   * (Warning: Medication stock is running low)
    */
-  async speakLowStockAlert(medicationName: string, count: number): Promise<void> {
-    const text = `ማስጠንቀቂያ፡ የ${medicationName} መድሃኒት ክምችት ሊያልቅ ተቃርቧል። ቀሪ፡ ${count} ኪኒን።`;
-    await this.speakText(text);
+  async speakLowStockAlert(): Promise<void> {
+    await this.playAudioClip(lowStockSound);
   }
 
   /**
-   * General text-to-speech speaker using Amharic voice with fallback
+   * Plays pre-bundled native Amharic MP3 clip with full volume affordance
    */
-  async speakText(text: string, options?: { rate?: number; pitch?: number }): Promise<void> {
+  private async playAudioClip(source: any): Promise<void> {
     try {
-      if (Platform.OS === 'web') return;
+      // Stop and clean up any currently playing sound
+      if (this.currentSound) {
+        try {
+          await this.currentSound.stopAsync();
+          await this.currentSound.unloadAsync();
+        } catch {
+          // Ignore
+        }
+        this.currentSound = null;
+      }
 
-      // Stop any active speech first
-      await this.stop();
+      // Configure hardware audio mode for high clarity
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        shouldDuckAndroid: true,
+      });
 
-      this.isSpeaking = true;
+      const { sound } = await Audio.Sound.createAsync(
+        source,
+        {
+          shouldPlay: true,
+          volume: 1.0,
+        }
+      );
 
-      Speech.speak(text, {
-        language: 'am-ET', // Amharic (Ethiopia)
-        pitch: options?.pitch ?? 1.0,
-        rate: options?.rate ?? 0.85, // Friendly, calm cadence for elderly users
-        onDone: () => {
-          this.isSpeaking = false;
-        },
-        onError: () => {
-          this.isSpeaking = false;
-        },
+      this.currentSound = sound;
+
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          sound.unloadAsync().catch(() => {});
+          this.currentSound = null;
+        }
       });
     } catch (error) {
-      console.warn('Amharic speech playback error:', error);
-      this.isSpeaking = false;
+      console.warn('Amharic audio playback error:', error);
     }
   }
 
-  /**
-   * Stops any currently speaking audio
-   */
   async stop(): Promise<void> {
-    try {
-      await Speech.stop();
-      this.isSpeaking = false;
-    } catch {
-      // Ignore
+    if (this.currentSound) {
+      try {
+        await this.currentSound.stopAsync();
+        await this.currentSound.unloadAsync();
+      } catch {
+        // Ignore
+      }
+      this.currentSound = null;
     }
-  }
-
-  getIsSpeaking(): boolean {
-    return this.isSpeaking;
   }
 }
 
