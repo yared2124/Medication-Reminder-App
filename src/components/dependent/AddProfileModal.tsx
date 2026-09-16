@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { triggerSelectionHaptic, triggerSuccessHaptic } from '../../utils/haptics';
 import { t } from '../../i18n';
+import { THEME } from '../../constants/theme';
 
 interface AddProfileModalProps {
   visible: boolean;
