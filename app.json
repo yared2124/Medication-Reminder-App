@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#2563EB"
+        "backgroundColor": "#3B9B94"
       },
       "package": "com.yared.medicationreminder"
     },

@@ -107,7 +107,7 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
                 key={p.id}
                 style={[
                   styles.profileChip,
-                  isSelected && { backgroundColor: p.color, borderColor: p.color },
+                  isSelected && styles.profileChipSelected,
                 ]}
                 onPress={() => {
                   triggerSelectionHaptic();
@@ -117,7 +117,7 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
                 <Text
                   style={[
                     styles.profileChipText,
-                    isSelected && { color: '#FFFFFF', fontWeight: '700' },
+                    isSelected && styles.profileChipTextSelected,
                   ]}
                 >
                   {p.name}
@@ -255,10 +255,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CBD5E1',
   },
+  profileChipSelected: {
+    backgroundColor: THEME.colors.teal,
+    borderColor: THEME.colors.tealDark,
+  },
   profileChipText: {
     fontSize: 13,
     color: '#334155',
     fontWeight: '600',
+  },
+  profileChipTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   textInput: {
     backgroundColor: '#FFFFFF',

@@ -25,11 +25,18 @@ export default function App() {
 
       const state = useAppStore.getState();
 
+      // Migrate any existing #2563EB profile colors to brand coral
+      state.profiles.forEach((p) => {
+        if (p.color === '#2563EB') {
+          p.color = THEME.colors.coral;
+        }
+      });
+
       // Seed initial patients from the Mədin design mockup if empty
       if (state.profiles.length === 0) {
         const yared = await addProfile({
           name: 'Yared',
-          color: '#2563EB',
+          color: THEME.colors.coral,
           relationship: 'Self',
           age: 32,
         });

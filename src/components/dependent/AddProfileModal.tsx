@@ -35,12 +35,12 @@ const RELATIONSHIP_PRESETS = [
 ];
 
 const COLOR_PALETTE = [
-  '#2563EB', // Royal Blue
+  THEME.colors.coral, // Coral / Orange (Brand Accent)
   '#EC4899', // Rose Pink
   '#059669', // Emerald Green
   '#7C3AED', // Twilight Violet
   '#D97706', // Sunrise Amber
-  '#0D9488', // Teal
+  THEME.colors.teal, // Teal (Brand)
 ];
 
 export const AddProfileModal: React.FC<AddProfileModalProps> = ({
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
     flex: 2,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: '#2563EB',
+    backgroundColor: THEME.colors.coral,
     alignItems: 'center',
   },
   saveBtnDisabled: {

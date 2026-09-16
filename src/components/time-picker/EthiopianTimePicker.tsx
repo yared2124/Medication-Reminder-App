@@ -10,6 +10,7 @@ import {
   formatGregorianTimePreview,
 } from '../../utils/ethiopianTime';
 import { triggerSelectionHaptic } from '../../utils/haptics';
+import { THEME } from '../../constants/theme';
 
 interface EthiopianTimePickerProps {
   value: EthiopianTime;
@@ -188,8 +189,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   periodTabSelected: {
-    backgroundColor: '#2563EB',
-    borderColor: '#1D4ED8',
+    backgroundColor: THEME.colors.coral,
+    borderColor: THEME.colors.coralDark,
   },
   periodTabText: {
     fontSize: 15,
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   periodSubTextSelected: {
-    color: '#BFDBFE',
+    color: '#FDEEE9',
   },
   hourRow: {
     flexDirection: 'row',
@@ -224,8 +225,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   hourButtonSelected: {
-    backgroundColor: '#1E293B',
-    borderColor: '#0F172A',
+    backgroundColor: THEME.colors.teal,
+    borderColor: THEME.colors.tealDark,
   },
   hourText: {
     fontSize: 15,
@@ -251,8 +252,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   minuteButtonSelected: {
-    backgroundColor: '#0284C7',
-    borderColor: '#0369A1',
+    backgroundColor: THEME.colors.teal,
+    borderColor: THEME.colors.tealDark,
   },
   minuteText: {
     fontSize: 14,
@@ -267,21 +268,21 @@ const styles = StyleSheet.create({
     marginTop: 16,
     padding: 12,
     borderRadius: 10,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: THEME.colors.tealLight,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: '#B2DFDB',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   previewLabel: {
     fontSize: 12,
-    color: '#1E40AF',
+    color: THEME.colors.tealDark,
     fontWeight: '500',
   },
   previewValue: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1E3A8A',
+    color: THEME.colors.coral,
   },
 });

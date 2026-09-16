@@ -10,6 +10,7 @@ import {
 import { Medication } from '../../types/models';
 import { triggerSuccessHaptic, triggerSelectionHaptic } from '../../utils/haptics';
 import { t } from '../../i18n';
+import { THEME } from '../../constants/theme';
 
 interface RefillStockModalProps {
   visible: boolean;
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   medHighlight: {
-    color: '#2563EB',
+    color: THEME.colors.teal,
     fontWeight: '700',
   },
   statBox: {
@@ -219,8 +220,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   presetBtnActive: {
-    backgroundColor: '#2563EB',
-    borderColor: '#1D4ED8',
+    backgroundColor: THEME.colors.teal,
+    borderColor: THEME.colors.tealDark,
   },
   presetBtnText: {
     fontSize: 12,
