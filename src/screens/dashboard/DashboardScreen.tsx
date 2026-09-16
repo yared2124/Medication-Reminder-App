@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,16 +11,19 @@ import {
 import { useAppStore } from '../../store/useAppStore';
 import { ProfileSwitcher } from '../../components/dependent/ProfileSwitcher';
 import { MedicationCard } from '../../components/medication/MedicationCard';
+import { AddProfileModal } from '../../components/dependent/AddProfileModal';
+import { RefillStockModal } from '../../components/medication/RefillStockModal';
+import { Medication } from '../../types/models';
+import { triggerSelectionHaptic } from '../../utils/haptics';
 import { t } from '../../i18n';
 
 interface DashboardScreenProps {
   onNavigateToAddMedication: () => void;
-  onNavigateToProfiles: () => void;
+  onNavigateToProfiles?: () => void;
 }
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onNavigateToAddMedication,
-  onNavigateToProfiles,
 }) => {
   const {
     profiles,
@@ -29,9 +32,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     medications,
     schedules,
     loadInitialData,
+    addProfile,
     logIntake,
     updateStock,
   } = useAppStore();
+
+  const [isAddProfileModalVisible, setIsAddProfileModalVisible] = useState(false);
+  const [selectedMedForRefill, setSelectedMedForRefill] = useState<Medication | null>(null);
 
   useEffect(() => {
     loadInitialData();
@@ -58,9 +65,19 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     logIntake(scheduleId, medId, profileId, 'SKIPPED');
   };
 
-  const handleRefill = (medId: string) => {
-    // Add default 30 pill refill
-    updateStock(medId, 30);
+  const handleConfirmRefill = (medicationId: string, addedCount: number) => {
+    updateStock(medicationId, addedCount);
+  };
+
+  const handleSaveProfile = async (newProfile: {
+    name: string;
+    relationship: string;
+    color: string;
+    age?: number;
+    emergencyContact?: string;
+  }) => {
+    const created = await addProfile(newProfile);
+    setActiveProfileId(created.id);
   };
 
   return (
@@ -76,7 +93,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
         <TouchableOpacity
           style={styles.addButton}
-          onPress={onNavigateToAddMedication}
+          onPress={() => {
+            triggerSelectionHaptic();
+            onNavigateToAddMedication();
+          }}
           activeOpacity={0.8}
         >
           <Text style={styles.addButtonText}>+ {t('medication.add_title')}</Text>
@@ -87,8 +107,14 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       <ProfileSwitcher
         profiles={profiles}
         activeProfileId={activeProfileId}
-        onSelectProfile={setActiveProfileId}
-        onAddProfile={onNavigateToProfiles}
+        onSelectProfile={(id) => {
+          triggerSelectionHaptic();
+          setActiveProfileId(id);
+        }}
+        onAddProfile={() => {
+          triggerSelectionHaptic();
+          setIsAddProfileModalVisible(true);
+        }}
       />
 
       {/* Main Medication List */}
@@ -109,7 +135,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             </Text>
             <TouchableOpacity
               style={styles.emptyCtaButton}
-              onPress={onNavigateToAddMedication}
+              onPress={() => {
+                triggerSelectionHaptic();
+                onNavigateToAddMedication();
+              }}
             >
               <Text style={styles.emptyCtaText}>+ አዲስ መድሃኒት መዝግብ</Text>
             </TouchableOpacity>
@@ -135,13 +164,31 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                   onSkip={() =>
                     schedule && handleSkip(item.id, schedule.id, item.profileId)
                   }
-                  onRefill={() => handleRefill(item.id)}
+                  onRefill={() => {
+                    triggerSelectionHaptic();
+                    setSelectedMedForRefill(item);
+                  }}
                 />
               );
             }}
           />
         )}
       </View>
+
+      {/* Interactive Add Dependent Modal */}
+      <AddProfileModal
+        visible={isAddProfileModalVisible}
+        onClose={() => setIsAddProfileModalVisible(false)}
+        onSave={handleSaveProfile}
+      />
+
+      {/* Interactive Refill Inventory Modal */}
+      <RefillStockModal
+        visible={selectedMedForRefill !== null}
+        medication={selectedMedForRefill}
+        onClose={() => setSelectedMedForRefill(null)}
+        onConfirmRefill={handleConfirmRefill}
+      />
     </SafeAreaView>
   );
 };

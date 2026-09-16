@@ -9,6 +9,7 @@ import {
   convertEthiopianToGregorianTime,
   formatGregorianTimePreview,
 } from '../../utils/ethiopianTime';
+import { triggerSelectionHaptic } from '../../utils/haptics';
 
 interface EthiopianTimePickerProps {
   value: EthiopianTime;
@@ -30,6 +31,7 @@ export const EthiopianTimePicker: React.FC<EthiopianTimePickerProps> = ({
   const minuteOptions = [0, 15, 30, 45];
 
   const handlePeriodSelect = (period: DiurnalPeriod) => {
+    triggerSelectionHaptic();
     // If current hour doesn't belong to new period, reset to period start
     const defaultHour = period === 'TEWAT' || period === 'MATA' ? 12 : 6;
     const newHour =
@@ -49,6 +51,7 @@ export const EthiopianTimePicker: React.FC<EthiopianTimePickerProps> = ({
   };
 
   const handleHourSelect = (hour: number) => {
+    triggerSelectionHaptic();
     onChange({
       ...value,
       hour,
@@ -56,6 +59,7 @@ export const EthiopianTimePicker: React.FC<EthiopianTimePickerProps> = ({
   };
 
   const handleMinuteSelect = (minute: number) => {
+    triggerSelectionHaptic();
     onChange({
       ...value,
       minute,

@@ -2,6 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Medication, Schedule } from '../../types/models';
 import { formatEthiopianTime } from '../../utils/ethiopianTime';
+import {
+  triggerSuccessHaptic,
+  triggerSelectionHaptic,
+  triggerWarningHaptic,
+} from '../../utils/haptics';
 import { t } from '../../i18n';
 
 interface MedicationCardProps {
@@ -68,7 +73,10 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
       <View style={styles.actionsRow}>
         <TouchableOpacity
           style={[styles.actionBtn, styles.takeBtn]}
-          onPress={onTake}
+          onPress={() => {
+            triggerSuccessHaptic();
+            onTake?.();
+          }}
           activeOpacity={0.8}
         >
           <Text style={styles.takeBtnText}>✓ {t('actions.take')}</Text>
@@ -76,7 +84,10 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
 
         <TouchableOpacity
           style={[styles.actionBtn, styles.snoozeBtn]}
-          onPress={onSnooze}
+          onPress={() => {
+            triggerSelectionHaptic();
+            onSnooze?.();
+          }}
           activeOpacity={0.8}
         >
           <Text style={styles.snoozeBtnText}>⏰ {t('actions.snooze')}</Text>
@@ -84,7 +95,10 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
 
         <TouchableOpacity
           style={[styles.actionBtn, styles.skipBtn]}
-          onPress={onSkip}
+          onPress={() => {
+            triggerWarningHaptic();
+            onSkip?.();
+          }}
           activeOpacity={0.8}
         >
           <Text style={styles.skipBtnText}>{t('actions.skip')}</Text>
