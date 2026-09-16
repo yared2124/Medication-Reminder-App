@@ -7,11 +7,13 @@ import {
   triggerSelectionHaptic,
   triggerWarningHaptic,
 } from '../../utils/haptics';
+import { voiceService } from '../../services/audio/voiceService';
 import { t } from '../../i18n';
 
 interface MedicationCardProps {
   medication: Medication;
   schedule?: Schedule;
+  patientName?: string;
   onTake?: () => void;
   onSnooze?: () => void;
   onSkip?: () => void;
@@ -21,6 +23,7 @@ interface MedicationCardProps {
 export const MedicationCard: React.FC<MedicationCardProps> = ({
   medication,
   schedule,
+  patientName = 'ውድ ታካሚ',
   onTake,
   onSnooze,
   onSkip,
@@ -30,6 +33,17 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
   const timeDisplay = schedule
     ? formatEthiopianTime(schedule.ethiopianTime, 'am')
     : null;
+
+  const handleSpeak = () => {
+    triggerSelectionHaptic();
+    const mealText = t(`meal.${medication.mealTiming}`);
+    voiceService.speakReminder(
+      patientName,
+      medication.name,
+      medication.dosage,
+      mealText
+    );
+  };
 
   return (
     <View style={styles.card}>
@@ -42,11 +56,23 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
           </Text>
         </View>
 
-        {timeDisplay && (
-          <View style={styles.timeBadge}>
-            <Text style={styles.timeBadgeText}>{timeDisplay}</Text>
-          </View>
-        )}
+        <View style={styles.headerRight}>
+          {/* Audio Accessibility Button */}
+          <TouchableOpacity
+            style={styles.speakerButton}
+            onPress={handleSpeak}
+            accessibilityLabel="የድምፅ ማስታወሻ አጫውት"
+            activeOpacity={0.7}
+          >
+            <Text style={styles.speakerIcon}>🔊</Text>
+          </TouchableOpacity>
+
+          {timeDisplay && (
+            <View style={styles.timeBadge}>
+              <Text style={styles.timeBadgeText}>{timeDisplay}</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Stock Bar */}
@@ -130,6 +156,23 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     flex: 1,
+    marginRight: 8,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  speakerButton: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  speakerIcon: {
+    fontSize: 14,
   },
   medName: {
     fontSize: 18,

@@ -151,10 +151,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => {
               const schedule = getScheduleForMed(item.id);
+              const profile = profiles.find((p) => p.id === item.profileId);
               return (
                 <MedicationCard
                   medication={item}
                   schedule={schedule}
+                  patientName={profile?.name}
                   onTake={() =>
                     schedule && handleTake(item.id, schedule.id, item.profileId)
                   }
