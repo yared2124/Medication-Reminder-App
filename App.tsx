@@ -6,6 +6,7 @@ import { AddMedicationScreen } from './src/screens/medication/AddMedicationScree
 import { HistoryScreen } from './src/screens/history/HistoryScreen';
 import { ProfilesScreen } from './src/screens/profiles/ProfilesScreen';
 import { BottomTabBar, TabType } from './src/components/navigation/BottomTabBar';
+import { SideMenuDrawer } from './src/components/navigation/SideMenuDrawer';
 import { AlarmModal } from './src/components/notifications/AlarmModal';
 import { voiceService } from './src/services/audio/voiceService';
 import { THEME } from './src/constants/theme';
@@ -14,6 +15,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('HOME');
   const [isAddingMedication, setIsAddingMedication] = useState(false);
   const [isAlarmModalVisible, setIsAlarmModalVisible] = useState(false);
+  const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
 
   const { addProfile, addMedicationWithSchedule, loadInitialData } = useAppStore();
 
@@ -107,6 +109,7 @@ export default function App() {
           <DashboardScreen
             onNavigateToAddMedication={() => setIsAddingMedication(true)}
             onOpenNotifications={handleOpenAlertTest}
+            onOpenMenu={() => setIsSideMenuOpen(true)}
           />
         );
       case 'HISTORY':
@@ -119,6 +122,7 @@ export default function App() {
           <DashboardScreen
             onNavigateToAddMedication={() => setIsAddingMedication(true)}
             onOpenNotifications={handleOpenAlertTest}
+            onOpenMenu={() => setIsSideMenuOpen(true)}
           />
         );
       default:
@@ -126,6 +130,7 @@ export default function App() {
           <DashboardScreen
             onNavigateToAddMedication={() => setIsAddingMedication(true)}
             onOpenNotifications={handleOpenAlertTest}
+            onOpenMenu={() => setIsSideMenuOpen(true)}
           />
         );
     }
@@ -171,6 +176,19 @@ export default function App() {
           setIsAlarmModalVisible(false);
         }}
         onDismiss={() => setIsAlarmModalVisible(false)}
+      />
+
+      {/* Side Navigation Drawer for ☰ */}
+      <SideMenuDrawer
+        visible={isSideMenuOpen}
+        onClose={() => setIsSideMenuOpen(false)}
+        onNavigate={(screen) => {
+          if (screen === 'ADD_MEDICATION') {
+            setIsAddingMedication(true);
+          } else {
+            setActiveTab(screen);
+          }
+        }}
       />
     </View>
   );

@@ -20,11 +20,13 @@ import { t } from '../../i18n';
 interface DashboardScreenProps {
   onNavigateToAddMedication: () => void;
   onOpenNotifications?: () => void;
+  onOpenMenu?: () => void;
 }
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onNavigateToAddMedication,
   onOpenNotifications,
+  onOpenMenu,
 }) => {
   const {
     profiles,
@@ -83,7 +85,14 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
       {/* 1. Mədin Teal Header (☰ Home 🔔) */}
       <View style={styles.tealHeader}>
-        <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.headerIconBtn}
+          onPress={() => {
+            triggerSelectionHaptic();
+            onOpenMenu?.();
+          }}
+          activeOpacity={0.7}
+        >
           <Text style={styles.headerIconText}>☰</Text>
         </TouchableOpacity>
 
