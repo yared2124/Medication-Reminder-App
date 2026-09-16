@@ -1,0 +1,79 @@
+{
+  "app": {
+    "name": "Medication Reminder",
+    "tagline": "Medication reminders in Ethiopian local time"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "confirm": "Confirm",
+    "today": "Today",
+    "all": "All",
+    "loading": "Loading...",
+    "empty": "No items recorded"
+  },
+  "diurnal": {
+    "TEWAT": "Morning",
+    "KESEAT": "Afternoon",
+    "MATA": "Evening",
+    "LELIT": "Night"
+  },
+  "meal": {
+    "BEFORE_MEAL": "Before meal",
+    "AFTER_MEAL": "After meal",
+    "WITH_MEAL": "With meal",
+    "ANYTIME": "Anytime"
+  },
+  "status": {
+    "PENDING": "Pending",
+    "TAKEN": "Taken",
+    "SNOOZED": "Snoozed",
+    "SKIPPED": "Skipped",
+    "MISSED": "Missed"
+  },
+  "actions": {
+    "take": "Taken",
+    "snooze": "Snooze",
+    "skip": "Skip",
+    "refill": "Refill Stock"
+  },
+  "medication": {
+    "add_title": "Add New Medication",
+    "edit_title": "Edit Medication",
+    "name_label": "Medication Name",
+    "name_placeholder": "e.g. Metformin",
+    "dosage_label": "Dosage",
+    "dosage_placeholder": "e.g. 1 tablet",
+    "meal_label": "Meal Instructions",
+    "time_label": "Intake Time (Ethiopian Local Time)",
+    "stock_label": "Current Stock (Units)",
+    "low_stock_warning": "Low stock warning! Only {{days}} days of doses remaining.",
+    "refill_stock": "Refill Inventory"
+  },
+  "profile": {
+    "title": "Patient Profiles",
+    "add": "Add New Profile",
+    "name_label": "Full Name",
+    "name_placeholder": "e.g. Yared or Mother",
+    "relationship_label": "Relationship",
+    "age_label": "Age",
+    "emergency_contact": "Emergency Phone Number"
+  },
+  "notifications": {
+    "alarm_title": "{{patientName}}, it's time for your medication!",
+    "alarm_body": "Time to take {{medicationName}} ({{dosage}} - {{mealTiming}}).",
+    "snooze_confirm": "Reminder snoozed for {{minutes}} minutes.",
+    "stock_alert_title": "Medication Stock Alert!",
+    "stock_alert_body": "Low stock for {{patientName}}'s {{medicationName}} ({{count}} left)"
+  },
+  "adherence": {
+    "title": "Intake History & Report",
+    "weekly_rate": "Weekly Adherence Rate",
+    "monthly_rate": "Monthly Adherence Rate",
+    "total_doses": "Total Scheduled",
+    "taken_doses": "Taken"
+  }
+}

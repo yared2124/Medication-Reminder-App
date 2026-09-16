@@ -1,0 +1,79 @@
+{
+  "app": {
+    "name": "የመድሃኒት ማስታወሻ",
+    "tagline": "በኢትዮጵያ ሰዓት አቆጣጠር የሚሰራ የመድሃኒት ማሳሰቢያ"
+  },
+  "common": {
+    "save": "አስቀምጥ",
+    "cancel": "ተመለስ",
+    "delete": "አጥፋ",
+    "edit": "አስተካክል",
+    "back": "ወደ ኋላ",
+    "confirm": "አረጋግጥ",
+    "today": "ዛሬ",
+    "all": "ሁሉም",
+    "loading": "እየጫነ ነው...",
+    "empty": "ምንም የተመዘገበ ነገር የለም"
+  },
+  "diurnal": {
+    "TEWAT": "ጠዋት",
+    "KESEAT": "ከሰዓት",
+    "MATA": "ማታ",
+    "LELIT": "ሌሊት"
+  },
+  "meal": {
+    "BEFORE_MEAL": "ከምግብ በፊት",
+    "AFTER_MEAL": "ከምግብ በኋላ",
+    "WITH_MEAL": "ከምግብ ጋር",
+    "ANYTIME": "በማንኛውም ሰዓት"
+  },
+  "status": {
+    "PENDING": "ይጠበቃል",
+    "TAKEN": "ተወስዷል",
+    "SNOOZED": "ተዘግይቷል",
+    "SKIPPED": "ተዘሏል",
+    "MISSED": "አልፏል"
+  },
+  "actions": {
+    "take": "ወሰድኩ",
+    "snooze": "አዘግይ",
+    "skip": "ዝለል",
+    "refill": "መድሃኒት ጨምር"
+  },
+  "medication": {
+    "add_title": "አዲስ መድሃኒት መዝግብ",
+    "edit_title": "መድሃኒት አስተካክል",
+    "name_label": "የመድሃኒቱ ስም",
+    "name_placeholder": "ለምሳሌ፡ ሜትፎርሚን",
+    "dosage_label": "መጠን",
+    "dosage_placeholder": "ለምሳሌ፡ 1 ኪኒን",
+    "meal_label": "አወሳሰድ ከምግብ ጋር",
+    "time_label": "የመውሰጃ ሰዓት (በኢትዮጵያ ሰዓት)",
+    "stock_label": "ያለዎት ብዛት (ኪኒን/ክምችት)",
+    "low_stock_warning": "የመድሃኒት ክምችት እያለቀ ነው! ለ {{days}} ቀናት ብቻ የሚበቃ ቀርቷል።",
+    "refill_stock": "ክምችት ሙላ"
+  },
+  "profile": {
+    "title": "የታካሚ መገለጫዎች",
+    "add": "አዲስ ሰው መዝግብ",
+    "name_label": "ሙሉ ስም",
+    "name_placeholder": "ለምሳሌ፡ ያሬድ ወይም እማማ",
+    "relationship_label": "ዝምድና",
+    "age_label": "እድሜ",
+    "emergency_contact": "የአደጋ ጊዜ ስልክ ቁጥር"
+  },
+  "notifications": {
+    "alarm_title": "{{patientName}}፣ የመድሃኒት ሰዓት ደርሷል!",
+    "alarm_body": "{{medicationName}} ({{dosage}} - {{mealTiming}}) የመውሰጃ ሰዓት ደርሷል።",
+    "snooze_confirm": "ማስታወሻው ለ {{minutes}} ደቂቃዎች ተዘግይቷል።",
+    "stock_alert_title": "የመድሃኒት ክምችት ማስጠንቀቂያ!",
+    "stock_alert_body": "{{patientName}} የ{{medicationName}} መድሃኒት ሊያልቅ ተቃርቧል (ቀሪ፡ {{count}})"
+  },
+  "adherence": {
+    "title": "የአወሳሰድ ታሪክና ሪፖርት",
+    "weekly_rate": "የሳምንቱ አወሳሰድ መጠን",
+    "monthly_rate": "የወሩ አወሳሰድ መጠን",
+    "total_doses": "አጠቃላይ የታዘዘ",
+    "taken_doses": "የተወሰደ"
+  }
+}
