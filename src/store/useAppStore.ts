@@ -35,6 +35,7 @@ interface AppState {
     status: 'TAKEN' | 'SNOOZED' | 'SKIPPED',
     reason?: string
   ) => Promise<void>;
+  clearHistory: (profileId?: string) => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -169,6 +170,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set((state) => ({
       logs: [log, ...state.logs],
+    }));
+  },
+
+  clearHistory: async (profileId?: string) => {
+    await repository.clearIntakeLogs(profileId);
+    set((state) => ({
+      logs: profileId ? state.logs.filter((l) => l.profileId !== profileId) : [],
     }));
   },
 }));

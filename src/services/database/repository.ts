@@ -30,6 +30,7 @@ export interface IAppRepository {
   getIntakeLogs(profileId?: string, limit?: number): Promise<IntakeLog[]>;
   logIntake(log: IntakeLog): Promise<void>;
   updateIntakeStatus(logId: string, status: IntakeStatus, reason?: string): Promise<void>;
+  clearIntakeLogs(profileId?: string): Promise<void>;
 }
 
 /**
@@ -143,6 +144,18 @@ export class LocalMemoryRepository implements IAppRepository {
       item.actualTime = Date.now();
       if (reason) item.reason = reason;
       this.logs.set(logId, { ...item });
+    }
+  }
+
+  async clearIntakeLogs(profileId?: string): Promise<void> {
+    if (profileId) {
+      for (const [id, log] of this.logs.entries()) {
+        if (log.profileId === profileId) {
+          this.logs.delete(id);
+        }
+      }
+    } else {
+      this.logs.clear();
     }
   }
 }
