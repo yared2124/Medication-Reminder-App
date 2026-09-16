@@ -1,4 +1,5 @@
-import { Audio } from 'expo-av';
+import { createAudioPlayer } from 'expo-audio';
+import { Platform } from 'react-native';
 
 // Bundled native Amharic studio audio clips
 // 100% offline, crystal-clear, authentic native Ethiopian voice
@@ -7,7 +8,7 @@ const takenSound = require('../../../assets/audio/taken_amharic.mp3');
 const lowStockSound = require('../../../assets/audio/low_stock_amharic.mp3');
 
 export class AmharicVoiceService {
-  private currentSound: Audio.Sound | null = null;
+  private currentPlayer: any = null;
 
   /**
    * Plays crystal-clear native Amharic audio:
@@ -42,58 +43,38 @@ export class AmharicVoiceService {
   }
 
   /**
-   * Plays pre-bundled native Amharic MP3 clip with full volume affordance
+   * Plays pre-bundled native Amharic MP3 clip using Expo SDK 57 expo-audio
    */
   private async playAudioClip(source: any): Promise<void> {
     try {
+      if (Platform.OS === 'web') return;
+
       // Stop and clean up any currently playing sound
-      if (this.currentSound) {
+      if (this.currentPlayer) {
         try {
-          await this.currentSound.stopAsync();
-          await this.currentSound.unloadAsync();
+          this.currentPlayer.pause();
         } catch {
           // Ignore
         }
-        this.currentSound = null;
+        this.currentPlayer = null;
       }
 
-      // Configure hardware audio mode for high clarity
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: true,
-      });
-
-      const { sound } = await Audio.Sound.createAsync(
-        source,
-        {
-          shouldPlay: true,
-          volume: 1.0,
-        }
-      );
-
-      this.currentSound = sound;
-
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          sound.unloadAsync().catch(() => {});
-          this.currentSound = null;
-        }
-      });
+      const player = createAudioPlayer(source);
+      this.currentPlayer = player;
+      player.play();
     } catch (error) {
       console.warn('Amharic audio playback error:', error);
     }
   }
 
   async stop(): Promise<void> {
-    if (this.currentSound) {
+    if (this.currentPlayer) {
       try {
-        await this.currentSound.stopAsync();
-        await this.currentSound.unloadAsync();
+        this.currentPlayer.pause();
       } catch {
         // Ignore
       }
-      this.currentSound = null;
+      this.currentPlayer = null;
     }
   }
 }
