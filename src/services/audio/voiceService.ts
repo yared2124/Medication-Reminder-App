@@ -9,9 +9,37 @@ const lowStockSound = require('../../../assets/audio/low_stock_amharic.mp3');
 
 export class AmharicVoiceService {
   private currentPlayer: any = null;
+  private isAlarmLooping: boolean = false;
 
   /**
-   * Plays crystal-clear native Amharic audio:
+   * Starts repeating native Amharic alarm audio:
+   * "መድሃኒትዎን የሚወስዱበት ሰዓት ደርሷል"
+   * (It is time to take your medication)
+   * Continuously plays like a ringing alarm until stopAlarmLoop() is called.
+   */
+  async startAlarmLoop(): Promise<void> {
+    if (this.isAlarmLooping && this.currentPlayer) return;
+    this.isAlarmLooping = true;
+    await this.playAudioClip(reminderSound, true);
+  }
+
+  /**
+   * Immediately stops and silences the repeating alarm loop.
+   */
+  async stopAlarmLoop(): Promise<void> {
+    this.isAlarmLooping = false;
+    await this.stop();
+  }
+
+  /**
+   * Returns whether the alarm is currently looping audio.
+   */
+  getIsLooping(): boolean {
+    return this.isAlarmLooping;
+  }
+
+  /**
+   * Plays crystal-clear native Amharic audio once:
    * "መድሃኒትዎን የሚወስዱበት ሰዓት ደርሷል"
    * (It is time to take your medication)
    */
@@ -21,7 +49,7 @@ export class AmharicVoiceService {
     _dosage?: string,
     _mealTimingAmharic?: string
   ): Promise<void> {
-    await this.playAudioClip(reminderSound);
+    await this.playAudioClip(reminderSound, false);
   }
 
   /**
@@ -30,7 +58,8 @@ export class AmharicVoiceService {
    * (Your medication is recorded. Wishing you good health!)
    */
   async speakTakenConfirmation(): Promise<void> {
-    await this.playAudioClip(takenSound);
+    this.isAlarmLooping = false;
+    await this.playAudioClip(takenSound, false);
   }
 
   /**
@@ -39,13 +68,14 @@ export class AmharicVoiceService {
    * (Warning: Medication stock is running low)
    */
   async speakLowStockAlert(): Promise<void> {
-    await this.playAudioClip(lowStockSound);
+    this.isAlarmLooping = false;
+    await this.playAudioClip(lowStockSound, false);
   }
 
   /**
    * Plays pre-bundled native Amharic MP3 clip using Expo SDK 57 expo-audio
    */
-  private async playAudioClip(source: any): Promise<void> {
+  private async playAudioClip(source: any, loop: boolean = false): Promise<void> {
     try {
       if (Platform.OS === 'web') return;
 
@@ -53,6 +83,7 @@ export class AmharicVoiceService {
       if (this.currentPlayer) {
         try {
           this.currentPlayer.pause();
+          this.currentPlayer.remove?.();
         } catch {
           // Ignore
         }
@@ -61,6 +92,9 @@ export class AmharicVoiceService {
 
       const player = createAudioPlayer(source);
       this.currentPlayer = player;
+      if (loop) {
+        player.loop = true;
+      }
       player.play();
     } catch (error) {
       console.warn('Amharic audio playback error:', error);
@@ -68,9 +102,11 @@ export class AmharicVoiceService {
   }
 
   async stop(): Promise<void> {
+    this.isAlarmLooping = false;
     if (this.currentPlayer) {
       try {
         this.currentPlayer.pause();
+        this.currentPlayer.remove?.();
       } catch {
         // Ignore
       }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useAppStore } from './src/store/useAppStore';
 import { DashboardScreen } from './src/screens/dashboard/DashboardScreen';
@@ -9,6 +9,7 @@ import { BottomTabBar, TabType } from './src/components/navigation/BottomTabBar'
 import { SideMenuDrawer } from './src/components/navigation/SideMenuDrawer';
 import { AlarmModal } from './src/components/notifications/AlarmModal';
 import { voiceService } from './src/services/audio/voiceService';
+import { formatEthiopianTime } from './src/utils/ethiopianTime';
 import { THEME } from './src/constants/theme';
 
 export default function App() {
@@ -16,8 +17,27 @@ export default function App() {
   const [isAddingMedication, setIsAddingMedication] = useState(false);
   const [isAlarmModalVisible, setIsAlarmModalVisible] = useState(false);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
+  const [activeAlarm, setActiveAlarm] = useState<{
+    scheduleId: string;
+    medicationId: string;
+    profileId: string;
+    medicationName: string;
+    patientName: string;
+    dosage: string;
+  } | null>(null);
 
-  const { addProfile, addMedicationWithSchedule, loadInitialData } = useAppStore();
+  const triggeredAlarmsRef = useRef<Set<string>>(new Set());
+
+  const {
+    profiles,
+    medications,
+    schedules,
+    addProfile,
+    addMedicationWithSchedule,
+    loadInitialData,
+    logIntake,
+    updateStock,
+  } = useAppStore();
 
   useEffect(() => {
     const initialize = async () => {
@@ -104,9 +124,62 @@ export default function App() {
     initialize();
   }, [loadInitialData, addProfile, addMedicationWithSchedule]);
 
+  // Real-time alarm ticker: monitors schedules every 10 seconds and triggers the
+  // Amharic repeating voice alarm when the scheduled clock time arrives.
+  useEffect(() => {
+    const checkSchedule = () => {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+
+      for (const sched of schedules) {
+        if (sched.isActive === false) continue;
+
+        if (sched.gregorianHour === currentHour && sched.gregorianMinute === currentMinute) {
+          const alarmKey = `${sched.id}_${todayKey}_${currentHour}_${currentMinute}`;
+          if (!triggeredAlarmsRef.current.has(alarmKey)) {
+            triggeredAlarmsRef.current.add(alarmKey);
+
+            const med = medications.find((m) => m.id === sched.medicationId);
+            const prof = profiles.find((p) => p.id === sched.profileId);
+
+            setActiveAlarm({
+              scheduleId: sched.id,
+              medicationId: sched.medicationId,
+              profileId: sched.profileId,
+              medicationName: med?.name || 'Medication',
+              patientName: prof?.name || 'Patient',
+              dosage: `${med?.dosage || '1 Tablet'} • ${formatEthiopianTime(sched.ethiopianTime)}`,
+            });
+            setIsAlarmModalVisible(true);
+            break;
+          }
+        }
+      }
+    };
+
+    checkSchedule();
+    const interval = setInterval(checkSchedule, 10000);
+    return () => clearInterval(interval);
+  }, [schedules, medications, profiles]);
+
   const handleOpenAlertTest = () => {
+    const firstSched = schedules[0];
+    const med = firstSched ? medications.find((m) => m.id === firstSched.medicationId) : null;
+    const prof = firstSched ? profiles.find((p) => p.id === firstSched.profileId) : null;
+
+    setActiveAlarm({
+      scheduleId: firstSched?.id || 'demo_sched',
+      medicationId: med?.id || 'demo_med',
+      profileId: prof?.id || 'demo_prof',
+      medicationName: med?.name || 'Amlodipine',
+      patientName: prof?.name || 'Yared',
+      dosage: firstSched
+        ? `${med?.dosage || '1 Tablet'} • ${formatEthiopianTime(firstSched.ethiopianTime)}`
+        : '1 Tablet • ጠዋት 2:00',
+    });
     setIsAlarmModalVisible(true);
-    voiceService.speakReminder();
   };
 
   const renderActiveTabScreen = () => {
@@ -169,20 +242,42 @@ export default function App() {
         </>
       )}
 
-      {/* Mədin Full-Screen Notification Overlay */}
+      {/* Mədin Full-Screen Notification Overlay with continuous looping Amharic alarm */}
       <AlarmModal
         visible={isAlarmModalVisible}
-        medicationName="Amlodipine"
-        patientName="Yared"
-        dosage="1 Tablet • ጠዋት 2:00"
-        onTake={() => {
+        medicationName={activeAlarm?.medicationName || 'Amlodipine'}
+        patientName={activeAlarm?.patientName || 'Yared'}
+        dosage={activeAlarm?.dosage || '1 Tablet • ጠዋት 2:00'}
+        onTake={async () => {
+          if (activeAlarm) {
+            await logIntake(
+              activeAlarm.scheduleId,
+              activeAlarm.medicationId,
+              activeAlarm.profileId,
+              'TAKEN'
+            );
+            await updateStock(activeAlarm.medicationId, -1);
+          }
           setIsAlarmModalVisible(false);
+          setActiveAlarm(null);
           voiceService.speakTakenConfirmation();
         }}
-        onSnooze={() => {
+        onSnooze={async () => {
+          if (activeAlarm) {
+            await logIntake(
+              activeAlarm.scheduleId,
+              activeAlarm.medicationId,
+              activeAlarm.profileId,
+              'SNOOZED'
+            );
+          }
           setIsAlarmModalVisible(false);
+          setActiveAlarm(null);
         }}
-        onDismiss={() => setIsAlarmModalVisible(false)}
+        onDismiss={() => {
+          setIsAlarmModalVisible(false);
+          setActiveAlarm(null);
+        }}
       />
 
       {/* Side Navigation Drawer for ☰ */}

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { THEME } from '../../constants/theme';
 import { triggerSuccessHaptic, triggerSelectionHaptic } from '../../utils/haptics';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { voiceService } from '../../services/audio/voiceService';
 
 interface AlarmModalProps {
   visible: boolean;
@@ -23,8 +24,40 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
   onSnooze,
   onDismiss,
 }) => {
+  // Continuous Amharic voice alarm loop:
+  // Starts ringing "መድሃኒትዎን የሚወስዱበት ሰዓት ደርሷል" repeatedly when visible,
+  // and silences immediately upon Taken, Snooze, or Dismiss.
+  useEffect(() => {
+    if (visible) {
+      voiceService.startAlarmLoop();
+    } else {
+      voiceService.stopAlarmLoop();
+    }
+
+    return () => {
+      voiceService.stopAlarmLoop();
+    };
+  }, [visible]);
+
+  const handleTakePress = () => {
+    voiceService.stopAlarmLoop();
+    triggerSuccessHaptic();
+    onTake();
+  };
+
+  const handleSnoozePress = () => {
+    voiceService.stopAlarmLoop();
+    triggerSelectionHaptic();
+    onSnooze();
+  };
+
+  const handleDismissPress = () => {
+    voiceService.stopAlarmLoop();
+    onDismiss();
+  };
+
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onDismiss}>
+    <Modal visible={visible} animationType="fade" transparent onRequestClose={handleDismissPress}>
       <View style={styles.overlay}>
         <View style={styles.alertCard}>
           {/* Glowing Bell Icon */}
@@ -32,15 +65,23 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
             <Ionicons name="notifications" size={32} color={THEME.colors.coral} />
           </View>
 
-          <Text style={styles.alertTitle}>Medication Reminder</Text>
+          <Text style={styles.alertTitle}>የመድሃኒት ማስታወሻ • Reminder</Text>
           <Text style={styles.alertSubtitle}>
             Your medicine intake for <Text style={styles.highlightText}>{patientName}</Text> is due.
           </Text>
 
+          {/* Repeating Voice Banner Indicator */}
+          <View style={styles.voiceIndicatorBadge}>
+            <Ionicons name="volume-high" size={18} color={THEME.colors.coral} />
+            <Text style={styles.voiceIndicatorText}>
+              "መድሃኒትዎን የሚወስዱበት ሰዓት ደርሷል"
+            </Text>
+          </View>
+
           {/* Pill Card Box */}
           <View style={styles.medBox}>
             <MaterialCommunityIcons name="pill" size={24} color={THEME.colors.teal} style={{ marginRight: 10 }} />
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.medNameText}>{medicationName}</Text>
               <Text style={styles.dosageText}>{dosage}</Text>
             </View>
@@ -50,24 +91,18 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
           <View style={styles.actionsRow}>
             <TouchableOpacity
               style={[styles.btn, styles.takenBtn]}
-              onPress={() => {
-                triggerSuccessHaptic();
-                onTake();
-              }}
+              onPress={handleTakePress}
               activeOpacity={0.8}
             >
-              <Text style={styles.takenBtnText}>Taken</Text>
+              <Text style={styles.takenBtnText}>ወሰድኩ • Taken</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.btn, styles.snoozeBtn]}
-              onPress={() => {
-                triggerSelectionHaptic();
-                onSnooze();
-              }}
+              onPress={handleSnoozePress}
               activeOpacity={0.8}
             >
-              <Text style={styles.snoozeBtnText}>Snooze</Text>
+              <Text style={styles.snoozeBtnText}>አቆይ • Snooze</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -128,6 +163,23 @@ const styles = StyleSheet.create({
   },
   highlightText: {
     color: THEME.colors.coral,
+    fontWeight: '700',
+  },
+  voiceIndicatorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(242, 110, 86, 0.12)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 16,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(242, 110, 86, 0.3)',
+  },
+  voiceIndicatorText: {
+    color: THEME.colors.coral,
+    fontSize: 13,
     fontWeight: '700',
   },
   medBox: {
