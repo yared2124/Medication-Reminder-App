@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { THEME } from '../../constants/theme';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -45,6 +46,16 @@ export const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
     voiceService.speakReminder();
   };
 
+  const handleOpenTelegram = async () => {
+    triggerSelectionHaptic();
+    const telegramUrl = 'https://t.me/Techyada21';
+    try {
+      await Linking.openURL(telegramUrl);
+    } catch (err) {
+      console.warn('Could not open Telegram URL:', err);
+    }
+  };
+
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -59,7 +70,7 @@ export const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
           <View style={styles.drawerHeader}>
             <View style={styles.brandRow}>
               <View style={styles.brandLogo}>
-                <MaterialCommunityIcons name="pill" size={20} color="#FFFFFF" />
+                <MaterialCommunityIcons name="pill" size={22} color={THEME.colors.teal} />
               </View>
               <View>
                 <Text style={styles.brandTitle}>Mədin</Text>
@@ -67,11 +78,12 @@ export const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
               </View>
             </View>
 
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
               <Ionicons name="close" size={22} color={THEME.colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
+          {/* Navigation Menu Links */}
           <ScrollView style={styles.menuItems} showsVerticalScrollIndicator={false}>
             {/* 1. Home */}
             <TouchableOpacity
@@ -142,6 +154,22 @@ export const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
               </View>
             </TouchableOpacity>
           </ScrollView>
+
+          {/* Developer Credit & Clickable Telegram Channel Link */}
+          <TouchableOpacity
+            style={styles.developerCard}
+            onPress={handleOpenTelegram}
+            activeOpacity={0.8}
+          >
+            <View style={styles.developerInfo}>
+              <Text style={styles.developedByLabel}>Developed By</Text>
+              <Text style={styles.developerName}>Yared • Tech Yada</Text>
+            </View>
+            <View style={styles.telegramButton}>
+              <Ionicons name="paper-plane" size={14} color="#FFFFFF" />
+              <Text style={styles.telegramButtonText}>Telegram</Text>
+            </View>
+          </TouchableOpacity>
 
           {/* Footer */}
           <View style={styles.footer}>
@@ -268,8 +296,50 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: THEME.colors.tealDark,
   },
+  developerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F0FDFA',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#CCFBF1',
+    marginBottom: 16,
+  },
+  developerInfo: {
+    flex: 1,
+  },
+  developedByLabel: {
+    fontSize: 10,
+    color: THEME.colors.tealDark,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  developerName: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginTop: 2,
+  },
+  telegramButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#229ED9',
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 18,
+    gap: 5,
+  },
+  telegramButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
   footer: {
-    paddingVertical: 20,
+    paddingVertical: 16,
     borderTopWidth: 1,
     borderColor: '#EBF1F1',
   },

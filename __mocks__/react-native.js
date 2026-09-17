@@ -13,4 +13,8 @@ module.exports = {
   Text: 'Text',
   TouchableOpacity: 'TouchableOpacity',
   Modal: 'Modal',
+  Linking: {
+    openURL: jest.fn(() => Promise.resolve()),
+    canOpenURL: jest.fn(() => Promise.resolve(true)),
+  },
 };

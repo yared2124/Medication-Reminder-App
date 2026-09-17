@@ -6,7 +6,7 @@
 [![Expo SDK](https://img.shields.io/badge/Expo-SDK%2057-000020.svg?style=flat&logo=expo)](https://expo.dev)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86.3-61DAFB.svg?style=flat&logo=react)](https://reactnative.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict%206.0-3178C6.svg?style=flat&logo=typescript)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Jest%20Tests-24%2F24%20Passing-brightgreen.svg?style=flat&logo=jest)](https://jestjs.io)
+[![Tests](https://img.shields.io/badge/Jest%20Tests-38%2F38%20Passing-brightgreen.svg?style=flat&logo=jest)](https://jestjs.io)
 [![License](https://img.shields.io/badge/License-MIT-teal.svg?style=flat)](#license)
 
 ---
@@ -209,11 +209,12 @@ Expected output:
 PASS __tests__/historyAndRepository.test.ts
 PASS __tests__/alarmService.test.ts
 PASS __tests__/ethiopianTime.test.ts
+PASS __tests__/e2eUserFlows.test.ts
 
-Test Suites: 3 passed, 3 total
-Tests:       24 passed, 24 total
+Test Suites: 4 passed, 4 total
+Tests:       38 passed, 38 total
 Snapshots:   0 total
-Time:        ~6.8 s
+Time:        ~7.5 s
 Ran all test suites.
 ```
 
@@ -261,5 +262,8 @@ Distributed under the **MIT License**. See `LICENSE` for more information.
 
 ## 👨‍💻 Developed By
 
-**Yared** ([@yared2124](https://github.com/yared2124))  
+**Yared (Tech Yada)**  
+- GitHub: [@yared2124](https://github.com/yared2124)  
+- Telegram Channel: [@Techyada21](https://t.me/Techyada21)  
+
 *Empowering health and adherence through culturally native technology.*
