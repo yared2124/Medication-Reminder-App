@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { THEME } from '../../constants/theme';
 import { triggerSelectionHaptic } from '../../utils/haptics';
 
@@ -30,9 +31,11 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
           onPress={() => handleTabPress('HOME')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabIcon, activeTab === 'HOME' && styles.tabIconActive]}>
-            🏠
-          </Text>
+          <Ionicons
+            name={activeTab === 'HOME' ? 'home' : 'home-outline'}
+            size={23}
+            color={activeTab === 'HOME' ? THEME.colors.teal : THEME.colors.textMuted}
+          />
           <Text style={[styles.tabLabel, activeTab === 'HOME' && styles.tabLabelActive]}>
             Home
           </Text>
@@ -44,9 +47,11 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
           onPress={() => handleTabPress('HISTORY')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabIcon, activeTab === 'HISTORY' && styles.tabIconActive]}>
-            📅
-          </Text>
+          <Ionicons
+            name={activeTab === 'HISTORY' ? 'calendar' : 'calendar-outline'}
+            size={23}
+            color={activeTab === 'HISTORY' ? THEME.colors.teal : THEME.colors.textMuted}
+          />
           <Text style={[styles.tabLabel, activeTab === 'HISTORY' && styles.tabLabelActive]}>
             History
           </Text>
@@ -62,7 +67,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
             }}
             activeOpacity={0.85}
           >
-            <Text style={styles.fabIcon}>+</Text>
+            <Ionicons name="add" size={32} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
@@ -72,9 +77,11 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
           onPress={() => handleTabPress('ALERTS')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabIcon, activeTab === 'ALERTS' && styles.tabIconActive]}>
-            🔔
-          </Text>
+          <Ionicons
+            name={activeTab === 'ALERTS' ? 'notifications' : 'notifications-outline'}
+            size={23}
+            color={activeTab === 'ALERTS' ? THEME.colors.teal : THEME.colors.textMuted}
+          />
           <Text style={[styles.tabLabel, activeTab === 'ALERTS' && styles.tabLabelActive]}>
             Alerts
           </Text>
@@ -86,9 +93,11 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
           onPress={() => handleTabPress('PROFILES')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabIcon, activeTab === 'PROFILES' && styles.tabIconActive]}>
-            👤
-          </Text>
+          <Ionicons
+            name={activeTab === 'PROFILES' ? 'people' : 'people-outline'}
+            size={23}
+            color={activeTab === 'PROFILES' ? THEME.colors.teal : THEME.colors.textMuted}
+          />
           <Text style={[styles.tabLabel, activeTab === 'PROFILES' && styles.tabLabelActive]}>
             Profiles
           </Text>

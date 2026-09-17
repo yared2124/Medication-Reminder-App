@@ -15,6 +15,7 @@ import { EthiopianTimePicker } from '../../components/time-picker/EthiopianTimeP
 import { EthiopianTime } from '../../types/ethiopianTime';
 import { MealTiming } from '../../types/models';
 import { THEME } from '../../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { triggerSelectionHaptic, triggerSuccessHaptic } from '../../utils/haptics';
 import { t } from '../../i18n';
 
@@ -86,7 +87,7 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
       {/* 1. Mədin Teal Header (< Add Medication) */}
       <View style={styles.tealHeader}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.7}>
-          <Text style={styles.backBtnIcon}>‹</Text>
+          <Ionicons name="chevron-back" size={26} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Add Medication</Text>
         <View style={{ width: 36 }} />

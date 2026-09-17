@@ -12,6 +12,7 @@ import {
 import { useAppStore } from '../../store/useAppStore';
 import { AddProfileModal } from '../../components/dependent/AddProfileModal';
 import { THEME } from '../../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { triggerSelectionHaptic } from '../../utils/haptics';
 
 interface ProfilesScreenProps {
@@ -50,7 +51,7 @@ export const ProfilesScreen: React.FC<ProfilesScreenProps> = ({ onSelectProfile 
       <View style={styles.content}>
         {/* Search Bar */}
         <View style={styles.searchBox}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Ionicons name="search-outline" size={18} color="#94A3B8" style={{ marginRight: 8 }} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search patients..."
@@ -93,7 +94,7 @@ export const ProfilesScreen: React.FC<ProfilesScreenProps> = ({ onSelectProfile 
                   </Text>
                 </View>
 
-                <Text style={styles.chevron}>›</Text>
+                <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
               </TouchableOpacity>
             );
           }}
@@ -108,6 +109,7 @@ export const ProfilesScreen: React.FC<ProfilesScreenProps> = ({ onSelectProfile 
           }}
           activeOpacity={0.85}
         >
+          <Ionicons name="person-add-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
           <Text style={styles.addPatientBtnText}>Add Patient</Text>
         </TouchableOpacity>
       </View>

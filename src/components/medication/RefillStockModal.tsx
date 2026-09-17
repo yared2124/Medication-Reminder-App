@@ -11,6 +11,7 @@ import { Medication } from '../../types/models';
 import { triggerSuccessHaptic, triggerSelectionHaptic } from '../../utils/haptics';
 import { t } from '../../i18n';
 import { THEME } from '../../constants/theme';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface RefillStockModalProps {
   visible: boolean;
@@ -56,7 +57,10 @@ export const RefillStockModal: React.FC<RefillStockModalProps> = ({
     >
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <Text style={styles.title}>💊 {t('medication.refill_stock')}</Text>
+          <View style={styles.titleRow}>
+            <MaterialCommunityIcons name="pill" size={22} color={THEME.colors.teal} />
+            <Text style={styles.title}>{t('medication.refill_stock')}</Text>
+          </View>
           <Text style={styles.subtitle}>
             ለ <Text style={styles.medHighlight}>{medication.name}</Text> ተጨማሪ ክምችት ይመዝግቡ
           </Text>
@@ -67,7 +71,7 @@ export const RefillStockModal: React.FC<RefillStockModalProps> = ({
               <Text style={styles.statLabel}>አሁን ያለው (Current):</Text>
               <Text style={styles.statValue}>{currentCount} ኪኒን</Text>
             </View>
-            <Text style={styles.arrowIcon}>→</Text>
+            <Ionicons name="arrow-forward" size={18} color="#94A3B8" />
             <View style={styles.statItem}>
               <Text style={styles.statLabel}>አዲስ ድምር (New Total):</Text>
               <Text style={[styles.statValue, styles.projectedValue]}>
@@ -149,6 +153,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 5,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   title: {
     fontSize: 18,

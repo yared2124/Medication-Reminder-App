@@ -15,6 +15,7 @@ import { RefillStockModal } from '../../components/medication/RefillStockModal';
 import { Medication } from '../../types/models';
 import { triggerSelectionHaptic } from '../../utils/haptics';
 import { THEME } from '../../constants/theme';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { t } from '../../i18n';
 
 interface DashboardScreenProps {
@@ -83,7 +84,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={THEME.colors.teal} />
 
-      {/* 1. Mədin Teal Header (☰ Home 🔔) */}
+      {/* 1. Mədin Teal Header (Menu - Home - Notifications) */}
       <View style={styles.tealHeader}>
         <TouchableOpacity
           style={styles.headerIconBtn}
@@ -93,7 +94,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           }}
           activeOpacity={0.7}
         >
-          <Text style={styles.headerIconText}>☰</Text>
+          <Ionicons name="menu-outline" size={26} color="#FFFFFF" />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Home</Text>
@@ -103,7 +104,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
           onPress={onOpenNotifications}
           activeOpacity={0.7}
         >
-          <Text style={styles.headerIconText}>🔔</Text>
+          <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
@@ -116,7 +117,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
         {filteredMeds.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>💊</Text>
+            <MaterialCommunityIcons
+              name="pill"
+              size={54}
+              color={THEME.colors.teal}
+              style={{ marginBottom: 12 }}
+            />
             <Text style={styles.emptyTitle}>No medications today</Text>
             <Text style={styles.emptySubtitle}>
               Tap the + button below to add your first Ethiopian time schedule.
@@ -128,7 +134,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 onNavigateToAddMedication();
               }}
             >
-              <Text style={styles.emptyCtaText}>+ Add Medication</Text>
+              <Ionicons name="add" size={18} color="#FFFFFF" style={{ marginRight: 4 }} />
+              <Text style={styles.emptyCtaText}>Add Medication</Text>
             </TouchableOpacity>
           </View>
         ) : (

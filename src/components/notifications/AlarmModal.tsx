@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { THEME } from '../../constants/theme';
 import { triggerSuccessHaptic, triggerSelectionHaptic } from '../../utils/haptics';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface AlarmModalProps {
   visible: boolean;
@@ -28,7 +29,7 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
         <View style={styles.alertCard}>
           {/* Glowing Bell Icon */}
           <View style={styles.bellHalo}>
-            <Text style={styles.bellIcon}>🔔</Text>
+            <Ionicons name="notifications" size={32} color={THEME.colors.coral} />
           </View>
 
           <Text style={styles.alertTitle}>Medication Reminder</Text>
@@ -38,7 +39,7 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
 
           {/* Pill Card Box */}
           <View style={styles.medBox}>
-            <Text style={styles.medIcon}>💊</Text>
+            <MaterialCommunityIcons name="pill" size={24} color={THEME.colors.teal} style={{ marginRight: 10 }} />
             <View>
               <Text style={styles.medNameText}>{medicationName}</Text>
               <Text style={styles.dosageText}>{dosage}</Text>

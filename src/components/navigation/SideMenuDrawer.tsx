@@ -9,6 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { THEME } from '../../constants/theme';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { triggerSelectionHaptic } from '../../utils/haptics';
 import { voiceService } from '../../services/audio/voiceService';
 import { i18n } from '../../i18n';
@@ -58,7 +59,7 @@ export const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
           <View style={styles.drawerHeader}>
             <View style={styles.brandRow}>
               <View style={styles.brandLogo}>
-                <Text style={styles.brandLogoText}>💊</Text>
+                <MaterialCommunityIcons name="pill" size={20} color="#FFFFFF" />
               </View>
               <View>
                 <Text style={styles.brandTitle}>Mədin</Text>
@@ -67,7 +68,7 @@ export const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
             </View>
 
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Text style={styles.closeBtnText}>✕</Text>
+              <Ionicons name="close" size={22} color={THEME.colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -78,7 +79,7 @@ export const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
               onPress={() => handleSelectScreen('HOME')}
               activeOpacity={0.7}
             >
-              <Text style={styles.menuIcon}>🏠</Text>
+              <Ionicons name="home-outline" size={20} color={THEME.colors.teal} style={{ marginRight: 14 }} />
               <Text style={styles.menuLabel}>Home (ዋና ገጽ)</Text>
             </TouchableOpacity>
 
@@ -88,7 +89,7 @@ export const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
               onPress={() => handleSelectScreen('HISTORY')}
               activeOpacity={0.7}
             >
-              <Text style={styles.menuIcon}>📅</Text>
+              <Ionicons name="calendar-outline" size={20} color={THEME.colors.teal} style={{ marginRight: 14 }} />
               <Text style={styles.menuLabel}>History & Adherence (የአወሳሰድ ታሪክ)</Text>
             </TouchableOpacity>
 
@@ -98,7 +99,7 @@ export const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
               onPress={() => handleSelectScreen('PROFILES')}
               activeOpacity={0.7}
             >
-              <Text style={styles.menuIcon}>👥</Text>
+              <Ionicons name="people-outline" size={20} color={THEME.colors.teal} style={{ marginRight: 14 }} />
               <Text style={styles.menuLabel}>Patient Profiles (የታካሚ መገለጫዎች)</Text>
             </TouchableOpacity>
 
@@ -108,7 +109,7 @@ export const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
               onPress={() => handleSelectScreen('ADD_MEDICATION')}
               activeOpacity={0.7}
             >
-              <Text style={styles.menuIcon}>➕</Text>
+              <Ionicons name="add-circle-outline" size={20} color={THEME.colors.coral} style={{ marginRight: 14 }} />
               <Text style={styles.menuLabel}>Add Medication (አዲስ መዝግብ)</Text>
             </TouchableOpacity>
 
@@ -120,7 +121,7 @@ export const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
               onPress={handleTestVoice}
               activeOpacity={0.7}
             >
-              <Text style={styles.menuIcon}>🔊</Text>
+              <Ionicons name="volume-high-outline" size={20} color={THEME.colors.teal} style={{ marginRight: 14 }} />
               <Text style={styles.menuLabel}>Test Voice Audio (ድምፅ ፈትን)</Text>
             </TouchableOpacity>
 
@@ -130,7 +131,7 @@ export const SideMenuDrawer: React.FC<SideMenuDrawerProps> = ({
               onPress={handleToggleLanguage}
               activeOpacity={0.7}
             >
-              <Text style={styles.menuIcon}>🌐</Text>
+              <Ionicons name="globe-outline" size={20} color={THEME.colors.teal} style={{ marginRight: 14 }} />
               <View style={styles.langRow}>
                 <Text style={styles.menuLabel}>Language / ቋንቋ</Text>
                 <View style={styles.langBadge}>

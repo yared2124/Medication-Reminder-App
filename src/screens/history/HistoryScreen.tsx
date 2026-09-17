@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useAppStore } from '../../store/useAppStore';
 import { THEME } from '../../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { triggerSelectionHaptic, triggerSuccessHaptic } from '../../utils/haptics';
 
 export const HistoryScreen: React.FC = () => {
@@ -71,7 +72,8 @@ export const HistoryScreen: React.FC = () => {
           onPress={handleClearHistory}
           activeOpacity={0.7}
         >
-          <Text style={styles.clearBtnText}>አጽዳ 🗑️</Text>
+          <Ionicons name="trash-outline" size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
+          <Text style={styles.clearBtnText}>አጽዳ</Text>
         </TouchableOpacity>
       </View>
 
@@ -93,13 +95,19 @@ export const HistoryScreen: React.FC = () => {
             }}
             activeOpacity={0.7}
           >
+            <Ionicons
+              name="people"
+              size={14}
+              color={selectedProfileId === 'ALL' ? '#FFFFFF' : THEME.colors.textSecondary}
+              style={{ marginRight: 4 }}
+            />
             <Text
               style={[
                 styles.patientChipText,
                 selectedProfileId === 'ALL' && styles.patientChipTextActive,
               ]}
             >
-              👥 ሁሉም (All)
+              ሁሉም (All)
             </Text>
           </TouchableOpacity>
 
@@ -144,11 +152,11 @@ export const HistoryScreen: React.FC = () => {
           {/* Month Header */}
           <View style={styles.monthHeader}>
             <TouchableOpacity onPress={() => triggerSelectionHaptic()}>
-              <Text style={styles.navArrow}>‹</Text>
+              <Ionicons name="chevron-back" size={20} color={THEME.colors.teal} />
             </TouchableOpacity>
             <Text style={styles.monthTitle}>{selectedMonth}</Text>
             <TouchableOpacity onPress={() => triggerSelectionHaptic()}>
-              <Text style={styles.navArrow}>›</Text>
+              <Ionicons name="chevron-forward" size={20} color={THEME.colors.teal} />
             </TouchableOpacity>
           </View>
 
@@ -240,7 +248,12 @@ export const HistoryScreen: React.FC = () => {
 
         {filteredLogs.length === 0 ? (
           <View style={styles.emptyLogsCard}>
-            <Text style={styles.emptyLogsIcon}>📋</Text>
+            <Ionicons
+              name="clipboard-outline"
+              size={42}
+              color={THEME.colors.teal}
+              style={{ marginBottom: 8 }}
+            />
             <Text style={styles.emptyLogsTitle}>ምንም የተመዘገበ ታሪክ የለም (ባዶ ነው)</Text>
             <Text style={styles.emptyLogsText}>
               {currentPatient
@@ -262,7 +275,11 @@ export const HistoryScreen: React.FC = () => {
                     { backgroundColor: isTaken ? THEME.colors.teal : THEME.colors.coral },
                   ]}
                 >
-                  <Text style={styles.statusBadgeText}>{isTaken ? '✓' : '⏰'}</Text>
+                  <Ionicons
+                    name={isTaken ? 'checkmark' : 'time-outline'}
+                    size={16}
+                    color="#FFFFFF"
+                  />
                 </View>
 
                 <View style={{ flex: 1 }}>

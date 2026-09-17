@@ -9,6 +9,7 @@ import {
 } from '../../utils/haptics';
 import { voiceService } from '../../services/audio/voiceService';
 import { THEME } from '../../constants/theme';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { t } from '../../i18n';
 
 interface MedicationCardProps {
@@ -66,7 +67,7 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
             accessibilityLabel="የድምፅ ማስታወሻ አጫውት"
             activeOpacity={0.7}
           >
-            <Text style={styles.speakerIcon}>🔊</Text>
+            <Ionicons name="volume-medium" size={17} color={THEME.colors.teal} />
           </TouchableOpacity>
 
           <Text style={styles.timeText}>{timeDisplay}</Text>
@@ -76,7 +77,7 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
       {/* 2. Medication Details */}
       <View style={styles.medDetails}>
         <View style={styles.medTitleRow}>
-          <Text style={styles.pillIcon}>💊</Text>
+          <MaterialCommunityIcons name="pill" size={18} color={THEME.colors.teal} style={{ marginRight: 6 }} />
           <Text style={styles.medName}>{medication.name}</Text>
         </View>
         <Text style={styles.dosageText}>
@@ -87,8 +88,9 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
       {/* 3. Stock warning (if low) */}
       {isLowStock && (
         <View style={styles.stockAlertRow}>
+          <Ionicons name="alert-circle" size={16} color={THEME.colors.coral} style={{ marginRight: 4 }} />
           <Text style={styles.stockAlertText}>
-            ⚠️ {t('medication.low_stock_warning', { days: 3 })} ({medication.stockCount} ቀሪ)
+            {t('medication.low_stock_warning', { days: 3 })} ({medication.stockCount} ቀሪ)
           </Text>
           {onRefill && (
             <TouchableOpacity onPress={onRefill} style={styles.refillLink}>
