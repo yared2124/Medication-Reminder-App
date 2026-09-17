@@ -261,5 +261,5 @@ Distributed under the **MIT License**. See `LICENSE` for more information.
 
 ## 👨‍💻 Developed By
 
-**Yared** & the **Mədin Health Engineering Team**  
+**Yared** ([@yared2124](https://github.com/yared2124))  
 *Empowering health and adherence through culturally native technology.*
