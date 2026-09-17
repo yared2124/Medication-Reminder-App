@@ -16,7 +16,6 @@ import { Medication } from '../../types/models';
 import { triggerSelectionHaptic } from '../../utils/haptics';
 import { THEME } from '../../constants/theme';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { t } from '../../i18n';
 
 interface DashboardScreenProps {
   onNavigateToAddMedication: () => void;

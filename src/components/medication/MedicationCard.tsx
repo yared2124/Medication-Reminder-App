@@ -5,7 +5,6 @@ import { formatEthiopianTime } from '../../utils/ethiopianTime';
 import {
   triggerSuccessHaptic,
   triggerSelectionHaptic,
-  triggerWarningHaptic,
 } from '../../utils/haptics';
 import { voiceService } from '../../services/audio/voiceService';
 import { THEME } from '../../constants/theme';

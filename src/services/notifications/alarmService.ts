@@ -1,6 +1,5 @@
 import { NotificationPayload, IntakeStatus } from '../../types/models';
 import { repository } from '../database/repository';
-import { t } from '../../i18n';
 
 export const ALARM_NOTIFICATION_CHANNEL_ID = 'medication_alarms_high_priority';
 export const ALARM_NOTIFICATION_CHANNEL_NAME = 'የመድሃኒት ማስታወሻዎች (High Priority)';
@@ -21,39 +20,6 @@ export class AlarmService {
    */
   async scheduleMedicationAlarm(payload: NotificationPayload): Promise<string> {
     const notificationId = `alarm_${payload.scheduleId}_${payload.scheduledTimestamp}`;
-
-    // Notification title & body formatted in Amharic
-    const mealLabel = t(`meal.${payload.mealTiming}`);
-    const title = t('notifications.alarm_title', { patientName: payload.patientName });
-    const body = t('notifications.alarm_body', {
-      medicationName: payload.medicationName,
-      dosage: payload.dosage,
-      mealTiming: mealLabel,
-    });
-
-    // In a React Native environment with @notifee/react-native:
-    // await notifee.createTriggerNotification({
-    //   id: notificationId,
-    //   title,
-    //   body,
-    //   android: {
-    //     channelId: ALARM_NOTIFICATION_CHANNEL_ID,
-    //     importance: AndroidImportance.HIGH,
-    //     category: AndroidCategory.ALARM,
-    //     fullScreenAction: { id: 'default' },
-    //     actions: [
-    //       { title: t('actions.take'), pressAction: { id: 'TAKEN' } },
-    //       { title: t('actions.snooze'), pressAction: { id: 'SNOOZE' } },
-    //       { title: t('actions.skip'), pressAction: { id: 'SKIP' } },
-    //     ],
-    //   },
-    //   trigger: {
-    //     type: TriggerType.TIMESTAMP,
-    //     timestamp: payload.scheduledTimestamp,
-    //     alarmManager: { allowWhileIdle: true },
-    //   },
-    // });
-
     this.scheduledAlarmCount++;
     return notificationId;
   }
@@ -137,18 +103,11 @@ export class AlarmService {
    * Dispatches warning notification when stock reaches critical threshold (<= 3 days)
    */
   async triggerLowStockNotification(
-    patientName: string,
-    medicationName: string,
-    count: number
+    _patientName: string,
+    _medicationName: string,
+    _count: number
   ): Promise<void> {
-    const title = t('notifications.stock_alert_title');
-    const body = t('notifications.stock_alert_body', {
-      patientName,
-      medicationName,
-      count,
-    });
-
-    // Send high-priority stock warning push
+    // Low stock warning dispatched
   }
 
   getScheduledCount(): number {

@@ -17,7 +17,7 @@ import { triggerSelectionHaptic, triggerSuccessHaptic } from '../../utils/haptic
 export const HistoryScreen: React.FC = () => {
   const { logs, medications, profiles, clearHistory } = useAppStore();
   const [selectedProfileId, setSelectedProfileId] = useState<string>('ALL');
-  const [selectedMonth, setSelectedMonth] = useState('April 2026');
+  const [selectedMonth] = useState('April 2026');
 
   // Days in calendar (sample 30 days grid)
   const days = Array.from({ length: 30 }, (_, i) => i + 1);

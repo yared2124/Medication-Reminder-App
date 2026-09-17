@@ -172,6 +172,16 @@ describe('Ethiopian Time Conversion Engine', () => {
   });
 
   describe('Next Occurrence & Scheduling Math', () => {
+    test('getGregorianDateFromEthiopian calculates reference date with Gregorian hours and minutes', () => {
+      const refDate = new Date(2026, 8, 16, 0, 0);
+      const ethiopianTime: EthiopianTime = { hour: 2, minute: 30, period: 'TEWAT' }; // 08:30 AM
+      const targetDate = getGregorianDateFromEthiopian(ethiopianTime, refDate);
+
+      expect(targetDate.getHours()).toBe(8);
+      expect(targetDate.getMinutes()).toBe(30);
+      expect(targetDate.getDate()).toBe(16);
+    });
+
     test('getNextDailyOccurrenceTimestamp schedules for today if time is in future', () => {
       const now = new Date(2026, 8, 16, 7, 0); // 07:00 AM (01:00 ጠዋት)
       const futureTime: EthiopianTime = { hour: 2, minute: 0, period: 'TEWAT' }; // 08:00 AM
