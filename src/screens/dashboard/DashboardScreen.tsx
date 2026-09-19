@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,13 @@ import { Medication } from '../../types/models';
 import { triggerSelectionHaptic } from '../../utils/haptics';
 import { THEME } from '../../constants/theme';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function formatLiveDate(d: Date): string {
+  return `${DAY_NAMES[d.getDay()]}, ${MONTH_SHORT[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
 
 interface DashboardScreenProps {
   onNavigateToAddMedication: () => void;
@@ -107,10 +114,16 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         </TouchableOpacity>
       </View>
 
+      {/* Live Date Pill */}
+      <View style={styles.datePillBar}>
+        <Ionicons name="calendar-outline" size={14} color={THEME.colors.teal} style={{ marginRight: 5 }} />
+        <Text style={styles.datePillText}>{formatLiveDate(new Date())}</Text>
+      </View>
+
       {/* 2. Main Content Feed */}
       <View style={styles.bodyContainer}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionHeading}>Upcoming for the day</Text>
+          <Text style={styles.sectionHeading}>Today's Medications</Text>
           <Text style={styles.countBadge}>{filteredMeds.length}</Text>
         </View>
 
@@ -198,6 +211,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
+  },
+  datePillBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  datePillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: THEME.colors.textSecondary,
   },
   headerTitle: {
     fontSize: 20,

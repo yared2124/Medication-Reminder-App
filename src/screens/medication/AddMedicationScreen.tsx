@@ -18,6 +18,9 @@ import { THEME } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { triggerSelectionHaptic, triggerSuccessHaptic } from '../../utils/haptics';
 import { t } from '../../i18n';
+import { convertGregorianToEthiopianTime } from '../../utils/ethiopianTime';
+
+import { AddProfileModal } from '../../components/dependent/AddProfileModal';
 
 interface AddMedicationScreenProps {
   onBack: () => void;
@@ -31,12 +34,19 @@ const MEAL_TIMINGS: MealTiming[] = [
   'ANYTIME',
 ];
 
+/** Returns an EthiopianTime object corresponding to the phone's current clock time */
+function getCurrentEthiopianTime(): EthiopianTime {
+  const now = new Date();
+  return convertGregorianToEthiopianTime({ hour: now.getHours(), minute: now.getMinutes() });
+}
+
 export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
   onBack,
   onSuccess,
 }) => {
-  const { profiles, activeProfileId, addMedicationWithSchedule } = useAppStore();
+  const { profiles, activeProfileId, addMedicationWithSchedule, addProfile } = useAppStore();
 
+  const [isAddProfileModalVisible, setIsAddProfileModalVisible] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string>(
     activeProfileId || (profiles[0]?.id ?? '')
   );
@@ -44,11 +54,9 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
   const [dosage, setDosage] = useState('1 Tablet');
   const [mealTiming, setMealTiming] = useState<MealTiming>('AFTER_MEAL');
   const [stockCount, setStockCount] = useState('30');
-  const [ethiopianTime, setEthiopianTime] = useState<EthiopianTime>({
-    hour: 2,
-    minute: 0,
-    period: 'TEWAT', // 02:00 ጠዋት = 8:00 AM
-  });
+  // ✅ Default to phone's current time instead of static hardcoded 02:00 TEWAT
+  const [ethiopianTime, setEthiopianTime] = useState<EthiopianTime>(getCurrentEthiopianTime());
+
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -95,38 +103,68 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Patient Selection */}
-        <Text style={styles.fieldLabel}>Patient name</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.profileRow}
-        >
-          {profiles.map((p) => {
-            const isSelected = selectedProfileId === p.id;
-            return (
-              <TouchableOpacity
-                key={p.id}
-                style={[
-                  styles.profileChip,
-                  isSelected && styles.profileChipSelected,
-                ]}
-                onPress={() => {
-                  triggerSelectionHaptic();
-                  setSelectedProfileId(p.id);
-                }}
-              >
-                <Text
+        <View style={styles.patientHeaderRow}>
+          <Text style={styles.fieldLabel}>Patient name (የታካሚ ስም)</Text>
+          <TouchableOpacity
+            onPress={() => {
+              triggerSelectionHaptic();
+              setIsAddProfileModalVisible(true);
+            }}
+            style={styles.addPatientChip}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={14} color={THEME.colors.teal} />
+            <Text style={styles.addPatientChipText}>+ New Profile</Text>
+          </TouchableOpacity>
+        </View>
+
+        {profiles.length === 0 ? (
+          <TouchableOpacity
+            style={styles.emptyProfilePrompt}
+            onPress={() => {
+              triggerSelectionHaptic();
+              setIsAddProfileModalVisible(true);
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="person-add-outline" size={20} color={THEME.colors.teal} />
+            <Text style={styles.emptyProfilePromptText}>
+              No profile added yet. Tap here to add yourself or a family member.
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.profileRow}
+          >
+            {profiles.map((p) => {
+              const isSelected = selectedProfileId === p.id;
+              return (
+                <TouchableOpacity
+                  key={p.id}
                   style={[
-                    styles.profileChipText,
-                    isSelected && styles.profileChipTextSelected,
+                    styles.profileChip,
+                    isSelected && styles.profileChipSelected,
                   ]}
+                  onPress={() => {
+                    triggerSelectionHaptic();
+                    setSelectedProfileId(p.id);
+                  }}
                 >
-                  {p.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+                  <Text
+                    style={[
+                      styles.profileChipText,
+                      isSelected && styles.profileChipTextSelected,
+                    ]}
+                  >
+                    {p.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
 
         {/* Medication Name */}
         <Text style={styles.fieldLabel}>Medication</Text>
@@ -191,14 +229,25 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
 
         {/* Bottom CTA Button: Add Now (Coral) */}
         <TouchableOpacity
-          style={[styles.addNowBtn, !name.trim() && styles.addNowBtnDisabled]}
+          style={[styles.addNowBtn, (!name.trim() || !selectedProfileId) && styles.addNowBtnDisabled]}
           onPress={handleSave}
-          disabled={!name.trim()}
+          disabled={!name.trim() || !selectedProfileId}
           activeOpacity={0.85}
         >
           <Text style={styles.addNowBtnText}>Add Now</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Add Patient Profile Modal */}
+      <AddProfileModal
+        visible={isAddProfileModalVisible}
+        onClose={() => setIsAddProfileModalVisible(false)}
+        onSave={async (newProfile) => {
+          const created = await addProfile(newProfile);
+          setSelectedProfileId(created.id);
+          setIsAddProfileModalVisible(false);
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -325,5 +374,44 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  patientHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  addPatientChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDFA',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#CCFBF1',
+  },
+  addPatientChipText: {
+    fontSize: 12,
+    color: THEME.colors.tealDark,
+    fontWeight: '700',
+  },
+  emptyProfilePrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDFA',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#99F6E4',
+    gap: 10,
+    marginBottom: 10,
+  },
+  emptyProfilePromptText: {
+    fontSize: 13,
+    color: THEME.colors.tealDark,
+    fontWeight: '600',
+    flex: 1,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,34 +14,118 @@ import { THEME } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { triggerSelectionHaptic, triggerSuccessHaptic } from '../../utils/haptics';
 
+// ── Calendar helpers ──────────────────────────────────────────────────────────
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+/** Days in a given month (1-indexed month) */
+function daysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
+
+/** 0=Sunday day of the week the month starts on */
+function monthStartDay(year: number, month: number): number {
+  return new Date(year, month - 1, 1).getDay();
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export const HistoryScreen: React.FC = () => {
   const { logs, medications, profiles, clearHistory } = useAppStore();
   const [selectedProfileId, setSelectedProfileId] = useState<string>('ALL');
-  const [selectedMonth] = useState('April 2026');
 
-  // Days in calendar (sample 30 days grid)
-  const days = Array.from({ length: 30 }, (_, i) => i + 1);
+  // Live calendar state: initialise to phone's current month & year
+  const today = new Date();
+  const [calYear, setCalYear] = useState(today.getFullYear());
+  const [calMonth, setCalMonth] = useState(today.getMonth() + 1); // 1-indexed
 
-  // Filter logs by selected patient
-  const filteredLogs =
-    selectedProfileId === 'ALL'
-      ? logs
-      : logs.filter((l) => l.profileId === selectedProfileId);
+  // ── Navigation ───────────────────────────────────────────────────────────────
+  const goToPrevMonth = () => {
+    triggerSelectionHaptic();
+    if (calMonth === 1) {
+      setCalYear((y) => y - 1);
+      setCalMonth(12);
+    } else {
+      setCalMonth((m) => m - 1);
+    }
+  };
 
-  // Taken rate calculation for selected patient
-  const takenLogs = filteredLogs.filter((l) => l.status === 'TAKEN');
+  const goToNextMonth = () => {
+    triggerSelectionHaptic();
+    if (calMonth === 12) {
+      setCalYear((y) => y + 1);
+      setCalMonth(1);
+    } else {
+      setCalMonth((m) => m + 1);
+    }
+  };
+
+  const goToToday = () => {
+    triggerSelectionHaptic();
+    setCalYear(today.getFullYear());
+    setCalMonth(today.getMonth() + 1);
+  };
+
+  const isCurrentMonthView =
+    calYear === today.getFullYear() && calMonth === today.getMonth() + 1;
+
+  // ── Calendar grid ────────────────────────────────────────────────────────────
+  const totalDays = daysInMonth(calYear, calMonth);
+  const startWeekday = monthStartDay(calYear, calMonth); // 0=Sun
+  // Build grid: leading nulls + actual days
+  const calendarCells: (number | null)[] = [
+    ...Array(startWeekday).fill(null),
+    ...Array.from({ length: totalDays }, (_, i) => i + 1),
+  ];
+
+  // ── Log filtering ────────────────────────────────────────────────────────────
+  const filteredLogs = useMemo(
+    () =>
+      selectedProfileId === 'ALL'
+        ? logs
+        : logs.filter((l) => l.profileId === selectedProfileId),
+    [logs, selectedProfileId]
+  );
+
+  /** All filtered logs within the currently-viewed calendar month */
+  const monthLogs = useMemo(
+    () =>
+      filteredLogs.filter((l) => {
+        const d = new Date(l.scheduledTime);
+        return d.getFullYear() === calYear && d.getMonth() + 1 === calMonth;
+      }),
+    [filteredLogs, calYear, calMonth]
+  );
+
+  /** Returns 'taken' | 'missed' | 'none' for a given calendar day */
+  const getDayStatus = (day: number): 'taken' | 'missed' | 'none' => {
+    const dayLogs = monthLogs.filter((l) => {
+      const d = new Date(l.scheduledTime);
+      return d.getDate() === day;
+    });
+    if (dayLogs.length === 0) return 'none';
+    const hasMissed = dayLogs.some((l) => l.status === 'MISSED');
+    return hasMissed ? 'missed' : 'taken';
+  };
+
+  // ── Adherence ────────────────────────────────────────────────────────────────
+  const takenInMonth = monthLogs.filter((l) => l.status === 'TAKEN').length;
   const adherenceRate =
-    filteredLogs.length > 0
-      ? Math.round((takenLogs.length / filteredLogs.length) * 100)
+    monthLogs.length > 0
+      ? Math.round((takenInMonth / monthLogs.length) * 100)
       : filteredLogs.length === 0 && logs.length === 0
       ? 100
-      : 88;
+      : monthLogs.length === 0 && filteredLogs.length > 0
+      ? 0
+      : 100;
 
   const currentPatient = profiles.find((p) => p.id === selectedProfileId);
 
   const handleClearHistory = () => {
     const targetName = currentPatient ? currentPatient.name : 'ሁሉንም (All Patients)';
-
     Alert.alert(
       'የመድሃኒት ታሪክ ማጽጃ (Reset History)',
       `ይህ የ${targetName} የመድሃኒት መውሰጃ ታሪክ ሙሉ በሙሉ ከዜሮ እንዲጀምር ያጠፋዋል። እርግጠኛ ነዎት?`,
@@ -59,11 +143,12 @@ export const HistoryScreen: React.FC = () => {
     );
   };
 
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={THEME.colors.teal} />
 
-      {/* Teal Header with Reset Action */}
+      {/* Teal Header */}
       <View style={styles.tealHeader}>
         <View style={{ width: 80 }} />
         <Text style={styles.headerTitle}>History</Text>
@@ -77,7 +162,7 @@ export const HistoryScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Patient Selector Filter Bar */}
+      {/* Patient Filter Bar */}
       <View style={styles.filterBarWrapper}>
         <ScrollView
           horizontal
@@ -85,14 +170,8 @@ export const HistoryScreen: React.FC = () => {
           contentContainerStyle={styles.filterRow}
         >
           <TouchableOpacity
-            style={[
-              styles.patientChip,
-              selectedProfileId === 'ALL' && styles.patientChipActive,
-            ]}
-            onPress={() => {
-              triggerSelectionHaptic();
-              setSelectedProfileId('ALL');
-            }}
+            style={[styles.patientChip, selectedProfileId === 'ALL' && styles.patientChipActive]}
+            onPress={() => { triggerSelectionHaptic(); setSelectedProfileId('ALL'); }}
             activeOpacity={0.7}
           >
             <Ionicons
@@ -101,12 +180,7 @@ export const HistoryScreen: React.FC = () => {
               color={selectedProfileId === 'ALL' ? '#FFFFFF' : THEME.colors.textSecondary}
               style={{ marginRight: 4 }}
             />
-            <Text
-              style={[
-                styles.patientChipText,
-                selectedProfileId === 'ALL' && styles.patientChipTextActive,
-              ]}
-            >
+            <Text style={[styles.patientChipText, selectedProfileId === 'ALL' && styles.patientChipTextActive]}>
               ሁሉም (All)
             </Text>
           </TouchableOpacity>
@@ -116,14 +190,8 @@ export const HistoryScreen: React.FC = () => {
             return (
               <TouchableOpacity
                 key={p.id}
-                style={[
-                  styles.patientChip,
-                  isSelected && styles.patientChipActive,
-                ]}
-                onPress={() => {
-                  triggerSelectionHaptic();
-                  setSelectedProfileId(p.id);
-                }}
+                style={[styles.patientChip, isSelected && styles.patientChipActive]}
+                onPress={() => { triggerSelectionHaptic(); setSelectedProfileId(p.id); }}
                 activeOpacity={0.7}
               >
                 <View
@@ -132,12 +200,7 @@ export const HistoryScreen: React.FC = () => {
                     { backgroundColor: isSelected ? '#FFFFFF' : (p.color || THEME.colors.teal) },
                   ]}
                 />
-                <Text
-                  style={[
-                    styles.patientChipText,
-                    isSelected && styles.patientChipTextActive,
-                  ]}
-                >
+                <Text style={[styles.patientChipText, isSelected && styles.patientChipTextActive]}>
                   {p.name}
                 </Text>
               </TouchableOpacity>
@@ -149,41 +212,50 @@ export const HistoryScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Calendar Card */}
         <View style={styles.calendarCard}>
-          {/* Month Header */}
+          {/* Month Header with Navigation */}
           <View style={styles.monthHeader}>
-            <TouchableOpacity onPress={() => triggerSelectionHaptic()}>
-              <Ionicons name="chevron-back" size={20} color={THEME.colors.teal} />
+            <TouchableOpacity onPress={goToPrevMonth} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="chevron-back" size={22} color={THEME.colors.teal} />
             </TouchableOpacity>
-            <Text style={styles.monthTitle}>{selectedMonth}</Text>
-            <TouchableOpacity onPress={() => triggerSelectionHaptic()}>
-              <Ionicons name="chevron-forward" size={20} color={THEME.colors.teal} />
+            <View style={styles.monthTitleGroup}>
+              <Text style={styles.monthTitle}>{MONTH_NAMES[calMonth - 1]} {calYear}</Text>
+              {!isCurrentMonthView && (
+                <TouchableOpacity onPress={goToToday} style={styles.todayBadge} activeOpacity={0.7}>
+                  <Text style={styles.todayBadgeText}>Today ↩</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            <TouchableOpacity onPress={goToNextMonth} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="chevron-forward" size={22} color={THEME.colors.teal} />
             </TouchableOpacity>
           </View>
 
-          {/* Days of Week Row */}
+          {/* Days of Week Header */}
           <View style={styles.weekDaysRow}>
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
-              <Text key={idx} style={styles.weekDayText}>
-                {day}
-              </Text>
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+              <Text key={i} style={styles.weekDayText}>{d}</Text>
             ))}
           </View>
 
-          {/* Days Grid */}
+          {/* Calendar Grid */}
           <View style={styles.daysGrid}>
-            {days.map((day) => {
-              // Mark days
-              const hasLogs = filteredLogs.length > 0;
-              const isTaken = hasLogs && day % 4 !== 0;
-              const isMissed = hasLogs && (day === 8 || day === 17 || day === 24);
-              const isCurrent = day === 16;
+            {calendarCells.map((day, idx) => {
+              if (day === null) {
+                return <View key={`empty-${idx}`} style={styles.dayCell} />;
+              }
+
+              const isToday =
+                isCurrentMonthView && day === today.getDate();
+              const status = getDayStatus(day);
+              const isTaken = status === 'taken';
+              const isMissed = status === 'missed';
 
               return (
                 <View
                   key={day}
                   style={[
                     styles.dayCell,
-                    isCurrent && styles.dayCellCurrent,
+                    isToday && styles.dayCellToday,
                     isMissed && styles.dayCellMissed,
                     isTaken && !isMissed && styles.dayCellTaken,
                   ]}
@@ -192,6 +264,7 @@ export const HistoryScreen: React.FC = () => {
                     style={[
                       styles.dayText,
                       (isTaken || isMissed) && styles.dayTextWhite,
+                      isToday && !isTaken && !isMissed && styles.dayTextToday,
                     ]}
                   >
                     {day}
@@ -211,11 +284,15 @@ export const HistoryScreen: React.FC = () => {
               <View style={[styles.legendDot, { backgroundColor: THEME.colors.coral }]} />
               <Text style={styles.legendLabel}>Missed</Text>
             </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { borderWidth: 2, borderColor: THEME.colors.teal, backgroundColor: 'transparent' }]} />
+              <Text style={styles.legendLabel}>Today</Text>
+            </View>
             <Text style={styles.legendStat}>{adherenceRate}%</Text>
           </View>
         </View>
 
-        {/* Adherence Overview Box */}
+        {/* Adherence Overview */}
         <View style={styles.adherenceCard}>
           <View style={styles.adherenceRow}>
             <View>
@@ -223,7 +300,7 @@ export const HistoryScreen: React.FC = () => {
                 {currentPatient ? `${currentPatient.name}'s Adherence` : 'Overall Adherence'}
               </Text>
               <Text style={styles.adherenceSub}>
-                {currentPatient ? `${currentPatient.name} የመድሃኒት ተከታታይነት` : 'የሳምንቱ አጠቃላይ አፈጻጸም'}
+                {MONTH_NAMES[calMonth - 1]} {calYear} • {monthLogs.length} logs recorded
               </Text>
             </View>
             <View style={styles.percentageCircle}>
@@ -232,7 +309,7 @@ export const HistoryScreen: React.FC = () => {
           </View>
 
           <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${adherenceRate}%` }]} />
+            <View style={[styles.progressBarFill, { width: `${adherenceRate}%` as any }]} />
           </View>
         </View>
 
@@ -287,7 +364,15 @@ export const HistoryScreen: React.FC = () => {
                     {med?.name ?? 'Medication'} • {log.status}
                   </Text>
                   <Text style={styles.logSub}>
-                    {prof?.name ?? 'Patient'} • {new Date(log.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {prof?.name ?? 'Patient'} •{' '}
+                    {new Date(log.scheduledTime).toLocaleDateString([], {
+                      month: 'short',
+                      day: 'numeric',
+                    })}{' '}
+                    {new Date(log.scheduledTime).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
                   </Text>
                 </View>
               </View>
@@ -318,6 +403,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   clearBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 12,
@@ -387,89 +474,102 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
+  monthTitleGroup: {
+    alignItems: 'center',
+  },
   monthTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: THEME.colors.textPrimary,
   },
-  navArrow: {
-    fontSize: 22,
+  todayBadge: {
+    marginTop: 3,
+    backgroundColor: THEME.colors.tealLight,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  todayBadgeText: {
+    fontSize: 10,
     color: THEME.colors.teal,
     fontWeight: '700',
-    paddingHorizontal: 8,
   },
   weekDaysRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   weekDayText: {
     fontSize: 12,
     fontWeight: '600',
     color: THEME.colors.textMuted,
-    width: 32,
+    width: 36,
     textAlign: 'center',
   },
   daysGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    gap: 6,
   },
   dayCell: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: `${100 / 7}%` as any,
+    aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    marginBottom: 2,
   },
-  dayCellCurrent: {
+  dayCellToday: {
+    borderRadius: 18,
     borderWidth: 2,
     borderColor: THEME.colors.teal,
   },
   dayCellTaken: {
+    borderRadius: 18,
     backgroundColor: THEME.colors.teal,
   },
   dayCellMissed: {
+    borderRadius: 18,
     backgroundColor: THEME.colors.coral,
   },
   dayText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     color: THEME.colors.textPrimary,
   },
   dayTextWhite: {
     color: '#FFFFFF',
     fontWeight: '700',
   },
+  dayTextToday: {
+    color: THEME.colors.teal,
+    fontWeight: '800',
+  },
   legendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
-    paddingTop: 12,
+    marginTop: 12,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderColor: '#F1F5F9',
-    gap: 16,
+    gap: 12,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
   },
   legendLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: THEME.colors.textSecondary,
     fontWeight: '600',
   },
   legendStat: {
     marginLeft: 'auto',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: THEME.colors.teal,
   },
@@ -497,9 +597,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   percentageCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: THEME.colors.tealLight,
     alignItems: 'center',
     justifyContent: 'center',
@@ -547,10 +647,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...THEME.shadow.card,
   },
-  emptyLogsIcon: {
-    fontSize: 36,
-    marginBottom: 8,
-  },
   emptyLogsTitle: {
     fontSize: 15,
     fontWeight: '700',
@@ -575,16 +671,11 @@ const styles = StyleSheet.create({
     ...THEME.shadow.card,
   },
   statusBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  statusBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
   },
   logTitle: {
     fontSize: 14,
