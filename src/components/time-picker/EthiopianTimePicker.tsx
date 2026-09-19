@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
-  ScrollView,
 } from 'react-native';
 import {
   DiurnalPeriod,
