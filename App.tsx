@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { AppState, View, StyleSheet } from 'react-native';
+import notifee, { EventType, Notification } from '@notifee/react-native';
 import { useAppStore } from './src/store/useAppStore';
 import { DashboardScreen } from './src/screens/dashboard/DashboardScreen';
 import { AddMedicationScreen } from './src/screens/medication/AddMedicationScreen';
@@ -10,6 +11,13 @@ import { SideMenuDrawer } from './src/components/navigation/SideMenuDrawer';
 import { AlarmModal } from './src/components/notifications/AlarmModal';
 import { voiceService } from './src/services/audio/voiceService';
 import { formatEthiopianTime } from './src/utils/ethiopianTime';
+import {
+  AlarmService,
+  alarmService,
+  SNOOZE_ACTION_ID,
+  SKIP_ACTION_ID,
+  TAKEN_ACTION_ID,
+} from './src/services/notifications/alarmService';
 import { THEME } from './src/constants/theme';
 
 export default function App() {
@@ -24,145 +32,96 @@ export default function App() {
     medicationName: string;
     patientName: string;
     dosage: string;
+    scheduledTimestamp: number;
   } | null>(null);
-
-  const triggeredAlarmsRef = useRef<Set<string>>(new Set());
 
   const {
     profiles,
     medications,
     schedules,
-    addProfile,
-    addMedicationWithSchedule,
     loadInitialData,
     logIntake,
-    updateStock,
   } = useAppStore();
 
   useEffect(() => {
-    const initialize = async () => {
-      await loadInitialData();
+    loadInitialData();
+  }, [loadInitialData]);
 
-      const state = useAppStore.getState();
-
-      // Migrate any existing #2563EB profile colors to brand coral
-      state.profiles.forEach((p) => {
-        if (p.color === '#2563EB') {
-          p.color = THEME.colors.coral;
-        }
-      });
-
-      // Seed initial patients from the Mədin design mockup if empty
-      if (state.profiles.length === 0) {
-        const yared = await addProfile({
-          name: 'Yared',
-          color: THEME.colors.coral,
-          relationship: 'Self',
-          age: 32,
-        });
-
-        const kidist = await addProfile({
-          name: 'Kidist',
-          color: THEME.colors.teal,
-          relationship: 'Daughter',
-          age: 12,
-        });
-
-        const saranara = await addProfile({
-          name: 'Saranara (እማማ)',
-          color: '#EC4899',
-          relationship: 'Mother',
-          age: 64,
-        });
-
-        // 1. Amlodipine for Yared (ጠዋት 2:00)
-        await addMedicationWithSchedule(
-          {
-            profileId: yared.id,
-            name: 'Amlodipine',
-            dosage: '1 Tablet',
-            dosageAmount: 1,
-            mealTiming: 'AFTER_MEAL',
-            stockCount: 24,
-            lowStockThreshold: 6,
-          },
-          { hour: 2, minute: 0, period: 'TEWAT' } // 02:00 ጠዋት (8:00 AM)
-        );
-
-        // 2. Paracetamol for Kidist (ከሰዓት 8:30)
-        await addMedicationWithSchedule(
-          {
-            profileId: kidist.id,
-            name: 'Paracetamol',
-            dosage: '1 Tablet',
-            dosageAmount: 1,
-            mealTiming: 'AFTER_MEAL',
-            stockCount: 16,
-            lowStockThreshold: 6,
-          },
-          { hour: 8, minute: 30, period: 'KESEAT' } // 08:30 ከሰዓት (2:30 PM)
-        );
-
-        // 3. Metformin for Mother (ጠዋት 2:00)
-        await addMedicationWithSchedule(
-          {
-            profileId: saranara.id,
-            name: 'Metformin',
-            dosage: '1 Tablet',
-            dosageAmount: 1,
-            mealTiming: 'WITH_MEAL',
-            stockCount: 5, // Low stock demo!
-            lowStockThreshold: 6,
-          },
-          { hour: 2, minute: 0, period: 'TEWAT' }
-        );
-
-        useAppStore.getState().setActiveProfileId(null);
-      }
-    };
-
-    initialize();
-  }, [loadInitialData, addProfile, addMedicationWithSchedule]);
-
-  // Real-time alarm ticker: monitors schedules every 10 seconds and triggers the
-  // Amharic repeating voice alarm when the scheduled clock time arrives.
   useEffect(() => {
-    const checkSchedule = () => {
-      const now = new Date();
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-      const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
-
-      for (const sched of schedules) {
-        if (sched.isActive === false) continue;
-
-        if (sched.gregorianHour === currentHour && sched.gregorianMinute === currentMinute) {
-          const alarmKey = `${sched.id}_${todayKey}_${currentHour}_${currentMinute}`;
-          if (!triggeredAlarmsRef.current.has(alarmKey)) {
-            triggeredAlarmsRef.current.add(alarmKey);
-
-            const med = medications.find((m) => m.id === sched.medicationId);
-            const prof = profiles.find((p) => p.id === sched.profileId);
-
-            setActiveAlarm({
-              scheduleId: sched.id,
-              medicationId: sched.medicationId,
-              profileId: sched.profileId,
-              medicationName: med?.name || 'Medication',
-              patientName: prof?.name || 'Patient',
-              dosage: `${med?.dosage || '1 Tablet'} • ${formatEthiopianTime(sched.ethiopianTime)}`,
-            });
-            setIsAlarmModalVisible(true);
-            break;
-          }
-        }
+    let appWasInactive = false;
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') {
+        appWasInactive = true;
+      } else if (appWasInactive) {
+        appWasInactive = false;
+        void loadInitialData();
       }
+    });
+    return () => subscription.remove();
+  }, [loadInitialData]);
+
+  useEffect(() => {
+    const showNotification = (data: Notification['data'] | undefined) => {
+      const payload = AlarmService.deserializePayload(data);
+      if (!payload) return;
+      setActiveAlarm({
+        scheduleId: payload.scheduleId,
+        medicationId: payload.medicationId,
+        profileId: payload.profileId,
+        medicationName: payload.medicationName,
+        patientName: payload.patientName,
+        dosage: payload.dosage,
+        scheduledTimestamp: payload.scheduledTimestamp,
+      });
+      setIsAlarmModalVisible(true);
     };
 
-    checkSchedule();
-    const interval = setInterval(checkSchedule, 10000);
-    return () => clearInterval(interval);
-  }, [schedules, medications, profiles]);
+    const unsubscribe = notifee.onForegroundEvent(async ({ type, detail }) => {
+      const notification = detail.notification;
+      if (!notification) return;
+      if (type === EventType.DELIVERED || type === EventType.PRESS) {
+        showNotification(notification.data);
+        if (type === EventType.DELIVERED) {
+          const payload = AlarmService.deserializePayload(notification.data);
+          if (payload) await alarmService.scheduleNextOccurrence(payload.scheduleId);
+        }
+        return;
+      }
+      if (type !== EventType.ACTION_PRESS) return;
+
+      const payload = AlarmService.deserializePayload(notification.data);
+      if (!payload) return;
+      const actionId = detail.pressAction?.id;
+      const status = actionId === TAKEN_ACTION_ID
+        ? 'TAKEN'
+        : actionId === SNOOZE_ACTION_ID
+          ? 'SNOOZED'
+          : actionId === SKIP_ACTION_ID
+            ? 'SKIPPED'
+            : null;
+      if (!status) return;
+      await logIntake(
+        payload.scheduleId,
+        payload.medicationId,
+        payload.profileId,
+        status,
+        status === 'SKIPPED' ? 'User skipped this dose' : undefined,
+        payload.scheduledTimestamp
+      );
+      setIsAlarmModalVisible(false);
+      setActiveAlarm(null);
+      voiceService.stopAlarmLoop();
+      if (status === 'TAKEN') voiceService.speakTakenConfirmation();
+    });
+    notifee.getInitialNotification().then((initialNotification) => {
+      if (initialNotification?.notification.data) {
+        showNotification(initialNotification.notification.data);
+      }
+    }).catch((error: unknown) => {
+      console.error('Failed to load the notification that opened the app:', error);
+    });
+    return unsubscribe;
+  }, [logIntake]);
 
   const handleOpenAlertTest = () => {
     const firstSched = schedules[0];
@@ -178,6 +137,7 @@ export default function App() {
       dosage: firstSched
         ? `${med?.dosage || '1 Tablet'} • ${formatEthiopianTime(firstSched.ethiopianTime)}`
         : '1 Tablet • ጠዋት 2:00',
+      scheduledTimestamp: Date.now(),
     });
     setIsAlarmModalVisible(true);
   };
@@ -254,9 +214,10 @@ export default function App() {
               activeAlarm.scheduleId,
               activeAlarm.medicationId,
               activeAlarm.profileId,
-              'TAKEN'
+              'TAKEN',
+              undefined,
+              activeAlarm.scheduledTimestamp
             );
-            await updateStock(activeAlarm.medicationId, -1);
           }
           setIsAlarmModalVisible(false);
           setActiveAlarm(null);
@@ -268,13 +229,29 @@ export default function App() {
               activeAlarm.scheduleId,
               activeAlarm.medicationId,
               activeAlarm.profileId,
-              'SNOOZED'
+              'SNOOZED',
+              undefined,
+              activeAlarm.scheduledTimestamp
             );
           }
           setIsAlarmModalVisible(false);
           setActiveAlarm(null);
         }}
         onDismiss={() => {
+          setIsAlarmModalVisible(false);
+          setActiveAlarm(null);
+        }}
+        onSkip={async (reason) => {
+          if (activeAlarm) {
+            await logIntake(
+              activeAlarm.scheduleId,
+              activeAlarm.medicationId,
+              activeAlarm.profileId,
+              'SKIPPED',
+              reason,
+              activeAlarm.scheduledTimestamp
+            );
+          }
           setIsAlarmModalVisible(false);
           setActiveAlarm(null);
         }}
