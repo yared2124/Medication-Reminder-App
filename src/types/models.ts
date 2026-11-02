@@ -64,4 +64,5 @@ export interface NotificationPayload {
   dosage: string;
   mealTiming: MealTiming;
   scheduledTimestamp: number;
+  triggerTimestamp?: number;
 }

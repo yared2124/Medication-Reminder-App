@@ -34,7 +34,7 @@ describe('AlarmService & Notification Action Engine', () => {
     medicationName: 'ሜትፎርሚን',
     dosage: '1 ኪኒን',
     mealTiming: 'AFTER_MEAL',
-    scheduledTimestamp: Date.now(),
+    scheduledTimestamp: Date.now() + 60_000,
   };
 
   beforeEach(async () => {
@@ -68,6 +68,25 @@ describe('AlarmService & Notification Action Engine', () => {
     const logs = await repo.getIntakeLogs('prof_1');
     expect(logs.length).toBe(1);
     expect(logs[0].status).toBe('TAKEN');
+    expect(logs[0].scheduledTime).toBe(mockPayload.scheduledTimestamp);
+  });
+
+  test('Action: duplicate TAKEN events for one scheduled dose only decrement stock once', async () => {
+    await alarmService.handleNotificationAction('TAKEN', mockPayload);
+    await alarmService.handleNotificationAction('TAKEN', mockPayload);
+
+    expect((await repo.getMedicationById('med_1'))?.stockCount).toBe(9);
+    expect(await repo.getIntakeLogs('prof_1')).toHaveLength(1);
+  });
+
+  test('Action: TAKEN decrements the prescribed dosage quantity once', async () => {
+    await repo.saveMedication({ ...mockMed, id: 'med_two', dosageAmount: 2, stockCount: 8 });
+    await alarmService.handleNotificationAction('TAKEN', {
+      ...mockPayload,
+      medicationId: 'med_two',
+    });
+
+    expect((await repo.getMedicationById('med_two'))?.stockCount).toBe(6);
   });
 
   test('Action: SNOOZE schedules follow-up alarm and creates SNOOZED log', async () => {
@@ -81,10 +100,12 @@ describe('AlarmService & Notification Action Engine', () => {
     const logs = await repo.getIntakeLogs('prof_1');
     expect(logs.length).toBe(1);
     expect(logs[0].status).toBe('SNOOZED');
+    expect(logs[0].scheduledTime).toBe(mockPayload.scheduledTimestamp);
+    expect(alarmService.getScheduledCount()).toBe(1);
   });
 
   test('Action: SKIP leaves stock count unchanged and creates SKIPPED log', async () => {
-    const result = await alarmService.handleNotificationAction('SKIP', mockPayload);
+    const result = await alarmService.handleNotificationAction('SKIP', mockPayload, 'Other reason');
     expect(result.status).toBe('SKIPPED');
 
     const med = await repo.getMedicationById('med_1');
@@ -93,6 +114,6 @@ describe('AlarmService & Notification Action Engine', () => {
     const logs = await repo.getIntakeLogs('prof_1');
     expect(logs.length).toBe(1);
     expect(logs[0].status).toBe('SKIPPED');
-    expect(logs[0].reason).toContain('Skip');
+    expect(logs[0].reason).toBe('Other reason');
   });
 });

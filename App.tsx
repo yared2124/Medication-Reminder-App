@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AppState, View, StyleSheet } from 'react-native';
+import { Alert, AppState, View, StyleSheet } from 'react-native';
 import notifee, { EventType, Notification } from '@notifee/react-native';
 import { useAppStore } from './src/store/useAppStore';
 import { DashboardScreen } from './src/screens/dashboard/DashboardScreen';
@@ -100,14 +100,23 @@ export default function App() {
             ? 'SKIPPED'
             : null;
       if (!status) return;
-      await logIntake(
-        payload.scheduleId,
-        payload.medicationId,
-        payload.profileId,
-        status,
-        status === 'SKIPPED' ? 'User skipped this dose' : undefined,
-        payload.scheduledTimestamp
-      );
+      try {
+        await logIntake(
+          payload.scheduleId,
+          payload.medicationId,
+          payload.profileId,
+          status,
+          status === 'SKIPPED' ? 'User skipped this dose' : undefined,
+          payload.scheduledTimestamp
+        );
+      } catch (error) {
+        console.error(`Failed to record ${status.toLowerCase()} medication action:`, error);
+        Alert.alert(
+          'Could not save medication action',
+          error instanceof Error ? error.message : 'Please try again.'
+        );
+        return;
+      }
       setIsAlarmModalVisible(false);
       setActiveAlarm(null);
       voiceService.stopAlarmLoop();
@@ -140,6 +149,34 @@ export default function App() {
       scheduledTimestamp: Date.now(),
     });
     setIsAlarmModalVisible(true);
+  };
+
+  const handleAlarmAction = async (
+    status: 'TAKEN' | 'SNOOZED' | 'SKIPPED',
+    reason?: string
+  ) => {
+    if (!activeAlarm) return;
+    try {
+      await logIntake(
+        activeAlarm.scheduleId,
+        activeAlarm.medicationId,
+        activeAlarm.profileId,
+        status,
+        reason,
+        activeAlarm.scheduledTimestamp
+      );
+    } catch (error) {
+      console.error(`Failed to record ${status.toLowerCase()} medication action:`, error);
+      Alert.alert(
+        'Could not save medication action',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
+      return;
+    }
+
+    setIsAlarmModalVisible(false);
+    setActiveAlarm(null);
+    if (status === 'TAKEN') voiceService.speakTakenConfirmation();
   };
 
   const renderActiveTabScreen = () => {
@@ -208,53 +245,13 @@ export default function App() {
         medicationName={activeAlarm?.medicationName || 'Amlodipine'}
         patientName={activeAlarm?.patientName || 'Yared'}
         dosage={activeAlarm?.dosage || '1 Tablet • ጠዋት 2:00'}
-        onTake={async () => {
-          if (activeAlarm) {
-            await logIntake(
-              activeAlarm.scheduleId,
-              activeAlarm.medicationId,
-              activeAlarm.profileId,
-              'TAKEN',
-              undefined,
-              activeAlarm.scheduledTimestamp
-            );
-          }
-          setIsAlarmModalVisible(false);
-          setActiveAlarm(null);
-          voiceService.speakTakenConfirmation();
-        }}
-        onSnooze={async () => {
-          if (activeAlarm) {
-            await logIntake(
-              activeAlarm.scheduleId,
-              activeAlarm.medicationId,
-              activeAlarm.profileId,
-              'SNOOZED',
-              undefined,
-              activeAlarm.scheduledTimestamp
-            );
-          }
-          setIsAlarmModalVisible(false);
-          setActiveAlarm(null);
-        }}
+        onTake={() => handleAlarmAction('TAKEN')}
+        onSnooze={() => handleAlarmAction('SNOOZED')}
         onDismiss={() => {
           setIsAlarmModalVisible(false);
           setActiveAlarm(null);
         }}
-        onSkip={async (reason) => {
-          if (activeAlarm) {
-            await logIntake(
-              activeAlarm.scheduleId,
-              activeAlarm.medicationId,
-              activeAlarm.profileId,
-              'SKIPPED',
-              reason,
-              activeAlarm.scheduledTimestamp
-            );
-          }
-          setIsAlarmModalVisible(false);
-          setActiveAlarm(null);
-        }}
+        onSkip={(reason) => handleAlarmAction('SKIPPED', reason)}
       />
 
       {/* Side Navigation Drawer for ☰ */}

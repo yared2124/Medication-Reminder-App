@@ -6,7 +6,7 @@
 [![Expo SDK](https://img.shields.io/badge/Expo-SDK%2057-000020.svg?style=flat&logo=expo)](https://expo.dev)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86.3-61DAFB.svg?style=flat&logo=react)](https://reactnative.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict%206.0-3178C6.svg?style=flat&logo=typescript)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Jest%20Tests-38%2F38%20Passing-brightgreen.svg?style=flat&logo=jest)](https://jestjs.io)
+[![Tests](https://img.shields.io/badge/Jest%20Tests-40%2F40%20Passing-brightgreen.svg?style=flat&logo=jest)](https://jestjs.io)
 [![License](https://img.shields.io/badge/License-MIT-teal.svg?style=flat)](#license)
 
 ---
@@ -27,7 +27,8 @@
 ### 1. ⏰ Intuitive Ethiopian Time Engine
 - **Culturally aligned dial**: Select hours according to Ethiopian daylight/night phases.
 - **Real-time Gregorian Preview**: Instantly shows the converted system time (e.g., `ጠዋት 02:00` ➔ `8:00 AM`).
-- **Exact Alarms & Triggers**: Converts Ethiopian times to milliseconds for exact system alarms.
+- **Exact Alarms & Triggers**: Schedules Notifee timestamp triggers with Android AlarmManager and allow-while-idle behavior.
+- **Actionable reminders**: Full-screen/high-importance Android notifications offer Taken, Snooze, and Skip with a saved reason.
 
 ### 2. 👨‍👩‍👧‍👦 Multi-Dependent Family Care
 - **Manage multiple individuals** in one household (e.g., Self, Mother, Father, Children).
@@ -46,12 +47,18 @@
 - **Monthly Calendar Grid**: Visual dot markers showing taken vs missed doses.
 - **Patient Filter Chips**: Tap to view history for *All Patients* or a specific family member (e.g., Samuel, Kidist).
 - **Reset to Zero (አጽዳ 🗑️)**: Clear intake history data with one-tap confirmation to restart records.
+- Intake history records the scheduled occurrence time; taking a dose decrements stock once, including when actions arrive from the notification shade.
 
-### 5. 📦 Stock & Inventory Control
+### 5. 💾 Persistent Offline Data
+- Profiles, medications, schedules, inventory, and intake history are stored in SQLite with `expo-sqlite`.
+- The active profile preference is saved with MMKV and restored on launch.
+- Active reminders are rebuilt from SQLite every time the app starts.
+
+### 6. 📦 Stock & Inventory Control
 - Track pill counts and set low-stock thresholds.
 - **Quick Refill Modal**: Tap presets (+10, +30, +60 pills) to restock inventories.
 
-### 6. 🎨 Premium Mədin Design System
+### 7. 🎨 Premium Mədin Design System
 - **Brand Palette**: Primary Teal (`#3B9B94`) & Energetic Coral/Orange (`#F26E56`).
 - **Vector Icons**: Replaced all device-dependent emojis with crisp vector icons from `@expo/vector-icons` (`Ionicons`, `MaterialCommunityIcons`).
 - **Bilingual Interface**: Seamless switching between Amharic (አማርኛ) and English.
@@ -135,6 +142,8 @@ Medication-Reminder-App/
 - **Language**: TypeScript 6.0 (Strict mode enabled)
 - **State Management**: [Zustand](https://zustand-demo.pmnd.rs/)
 - **Audio Playback**: `expo-audio` (Modern native audio playback)
+- **Persistence**: `expo-sqlite` for app records and `react-native-mmkv` for preferences
+- **Notifications**: `@notifee/react-native` (native exact timestamp alarms and notification actions)
 - **Icons**: `@expo/vector-icons` (`Ionicons`, `MaterialCommunityIcons`)
 - **Haptics**: `expo-haptics`
 - **Testing**: Jest 29 + `ts-jest`
@@ -149,7 +158,7 @@ Make sure you have installed:
 1. **Node.js**: v18.x or higher (`node -v`)
 2. **npm** or **yarn**
 3. **Git**
-4. **Expo Go** app installed on your Android (via Google Play) or iOS (via App Store) device.
+4. An Android or iOS device for testing native notifications. Expo Go is not supported because MMKV and Notifee require native code.
 
 ---
 
@@ -166,23 +175,32 @@ cd Medication-Reminder-App
 npm install
 ```
 
-### Step 3: Start the Development Server
+### Step 3: Build and Run a Native Development App
 
-For local network or remote connection with Tunnel:
+The native modules must be included in a development or production build:
 
 ```bash
-# Recommended for physical mobile phones:
-npx expo start --tunnel -c
-
-# Or standard LAN mode:
-npx expo start
+npx expo run:android
+# For iOS on macOS:
+npx expo run:ios
 ```
 
-### Step 4: Open on Your Phone
+For EAS development builds, use:
 
-1. Open the **Expo Go** application on your smartphone.
-2. **Scan the QR Code** displayed in your terminal.
-3. If using tunnel or remote connection, paste the `exp://...` URL directly into Expo Go.
+```bash
+npx eas build --profile development --platform android
+```
+
+### Step 4: Start Metro
+
+```bash
+npx expo start --dev-client
+```
+
+### Android alarm permission checks
+
+Android may require users to allow notifications, exact alarms, and full-screen notifications in system settings. Test these permissions on each supported Android version and device vendor.
+After installing a build, schedule a reminder, force-stop/restart the app, reboot the device, and confirm the reminder and Taken/Snooze/Skip actions still work. Exact alarm and reboot behavior must be verified on physical devices before release.
 
 > 💡 **Developer Tip**:
 > - Press **`r`** in the terminal to quickly reload the app on your phone.
@@ -212,7 +230,7 @@ PASS __tests__/ethiopianTime.test.ts
 PASS __tests__/e2eUserFlows.test.ts
 
 Test Suites: 4 passed, 4 total
-Tests:       38 passed, 38 total
+Tests:       40 passed, 40 total
 Snapshots:   0 total
 Time:        ~7.5 s
 Ran all test suites.

@@ -1,7 +1,7 @@
 /**
  * Local Database Schema Definition & SQL DDL
  *
- * Designed for SQLite (react-native-quick-sqlite, op-sqlite, or expo-sqlite)
+ * Persistent app database schema used by expo-sqlite.
  */
 
 export const CREATE_TABLES_SQL = `

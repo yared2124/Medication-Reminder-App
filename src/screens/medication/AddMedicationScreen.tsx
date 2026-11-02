@@ -72,18 +72,37 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
     triggerSuccessHaptic();
     const parsedStock = parseInt(stockCount, 10) || 30;
 
-    await addMedicationWithSchedule(
-      {
-        profileId: selectedProfileId,
-        name: name.trim(),
-        dosage: dosage.trim() || '1 Tablet',
-        dosageAmount: 1,
-        mealTiming,
-        stockCount: parsedStock,
-        lowStockThreshold: 6,
-      },
-      ethiopianTime
-    );
+    let result: Awaited<ReturnType<typeof addMedicationWithSchedule>>;
+    try {
+      result = await addMedicationWithSchedule(
+        {
+          profileId: selectedProfileId,
+          name: name.trim(),
+          dosage: dosage.trim() || '1 Tablet',
+          dosageAmount: 1,
+          mealTiming,
+          stockCount: parsedStock,
+          lowStockThreshold: 6,
+        },
+        ethiopianTime
+      );
+    } catch (error) {
+      console.error('Failed to save medication:', error);
+      Alert.alert(
+        'Medication not saved',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
+      return;
+    }
+
+    if (result.scheduleError) {
+      Alert.alert(
+        'Reminder not scheduled',
+        `The medication was saved, but its reminder could not be scheduled. ${result.scheduleError}`,
+        [{ text: 'OK', onPress: onSuccess }]
+      );
+      return;
+    }
 
     onSuccess();
   };

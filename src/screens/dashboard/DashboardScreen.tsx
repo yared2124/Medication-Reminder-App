@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { useAppStore } from '../../store/useAppStore';
 import { MedicationCard } from '../../components/medication/MedicationCard';
@@ -41,7 +42,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     setActiveProfileId,
     medications,
     schedules,
-    loadInitialData,
     addProfile,
     logIntake,
     updateStock,
@@ -49,10 +49,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   const [isAddProfileModalVisible, setIsAddProfileModalVisible] = useState(false);
   const [selectedMedForRefill, setSelectedMedForRefill] = useState<Medication | null>(null);
-
-  useEffect(() => {
-    loadInitialData();
-  }, [loadInitialData]);
 
   // Filter medications by active profile if set
   const filteredMeds = activeProfileId
@@ -63,16 +59,40 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     return schedules.find((s) => s.medicationId === medId);
   };
 
-  const handleTake = (medId: string, scheduleId: string, profileId: string) => {
-    logIntake(scheduleId, medId, profileId, 'TAKEN');
+  const handleTake = async (medId: string, scheduleId: string, profileId: string) => {
+    try {
+      await logIntake(scheduleId, medId, profileId, 'TAKEN');
+    } catch (error) {
+      console.error('Failed to record medication intake:', error);
+      Alert.alert(
+        'Could not save medication action',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
+    }
   };
 
-  const handleSnooze = (medId: string, scheduleId: string, profileId: string) => {
-    logIntake(scheduleId, medId, profileId, 'SNOOZED');
+  const handleSnooze = async (medId: string, scheduleId: string, profileId: string) => {
+    try {
+      await logIntake(scheduleId, medId, profileId, 'SNOOZED');
+    } catch (error) {
+      console.error('Failed to snooze medication reminder:', error);
+      Alert.alert(
+        'Could not snooze reminder',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
+    }
   };
 
-  const handleConfirmRefill = (medicationId: string, addedCount: number) => {
-    updateStock(medicationId, addedCount);
+  const handleConfirmRefill = async (medicationId: string, addedCount: number) => {
+    try {
+      await updateStock(medicationId, addedCount);
+    } catch (error) {
+      console.error('Failed to update medication stock:', error);
+      Alert.alert(
+        'Could not update stock',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
+    }
   };
 
   const handleSaveProfile = async (newProfile: {

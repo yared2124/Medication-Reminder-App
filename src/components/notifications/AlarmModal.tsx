@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
+import { Alert, View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { THEME } from '../../constants/theme';
 import { triggerSuccessHaptic, triggerSelectionHaptic } from '../../utils/haptics';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ interface AlarmModalProps {
   dosage: string;
   onTake: () => void;
   onSnooze: () => void;
+  onSkip: (reason: string) => void;
   onDismiss: () => void;
 }
 
@@ -22,6 +23,7 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
   dosage,
   onTake,
   onSnooze,
+  onSkip,
   onDismiss,
 }) => {
   // Continuous Amharic voice alarm loop:
@@ -54,6 +56,20 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
   const handleDismissPress = () => {
     voiceService.stopAlarmLoop();
     onDismiss();
+  };
+
+  const handleSkipPress = () => {
+    Alert.alert('Skip this dose?', 'Choose a reason to save with your medication history.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Medication unavailable',
+        onPress: () => onSkip('Medication unavailable'),
+      },
+      {
+        text: 'Other reason',
+        onPress: () => onSkip('Other reason'),
+      },
+    ]);
   };
 
   return (
@@ -105,6 +121,13 @@ export const AlarmModal: React.FC<AlarmModalProps> = ({
               <Text style={styles.snoozeBtnText}>አቆይ • Snooze</Text>
             </TouchableOpacity>
           </View>
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={handleSkipPress}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.skipButtonText}>ዝለል • Skip dose</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -211,6 +234,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     width: '100%',
+  },
+  skipButton: {
+    marginTop: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  skipButtonText: {
+    color: '#CBD5E1',
+    fontSize: 13,
+    fontWeight: '600',
   },
   btn: {
     flex: 1,
