@@ -108,7 +108,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={THEME.colors.teal} />
+      <StatusBar barStyle="light-content" />
 
       {/* 1. Mədin Teal Header (Menu - Home - Notifications) */}
       <View style={styles.tealHeader}>

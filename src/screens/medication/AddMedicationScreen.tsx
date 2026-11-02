@@ -109,7 +109,7 @@ export const AddMedicationScreen: React.FC<AddMedicationScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={THEME.colors.teal} />
+      <StatusBar barStyle="light-content" />
 
       {/* 1. Mədin Teal Header (< Add Medication) */}
       <View style={styles.tealHeader}>

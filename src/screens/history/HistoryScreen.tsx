@@ -146,7 +146,7 @@ export const HistoryScreen: React.FC = () => {
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={THEME.colors.teal} />
+      <StatusBar barStyle="light-content" />
 
       {/* Teal Header */}
       <View style={styles.tealHeader}>
